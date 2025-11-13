@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./Home";
+import Register from "./Register";
 import "./App.css";
 
 function App() {
-  const [message, setMessage] = useState(""); //Loading...
+  const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -14,7 +15,7 @@ function App() {
     fetch("http://10.0.2.238:3000/api/hello")
       .then(res => res.json())
       .then(data => setMessage(data.message))
-      .catch(() => setMessage("")); //Backend not reachable
+      .catch(() => setMessage(""));
   }, []);
 
   const handleLogin = (e) => {
@@ -24,6 +25,8 @@ function App() {
 
   return (
     <Routes>
+
+      {/* LOGIN PAGE */}
       <Route
         path="/"
         element={
@@ -54,12 +57,24 @@ function App() {
               </form>
 
               <p className="backend-status">{message}</p>
+
+              {/* REGISTER BUTTON */}
+              <button 
+                className="login-btn" 
+                style={{ marginTop: "10px", background: "#28a745" }}
+                onClick={() => navigate("/register")}
+              >
+                Create Account
+              </button>
+
             </div>
           </div>
         }
       />
 
       <Route path="/home" element={<Home />} />
+
+      <Route path="/register" element={<Register />} />
     </Routes>
   );
 }
