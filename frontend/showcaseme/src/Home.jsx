@@ -1,7 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
 export default function Home() {
   const username = "John Doe";
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate("/");
+  };
 
   return (
     <div className="dashboard-wrapper">
@@ -17,7 +23,9 @@ export default function Home() {
           <div className="sidebar-item">Settings</div>
         </div>
 
-        <button className="logout-btn">Logout</button>
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
 
       <div className="dashboard-content">
