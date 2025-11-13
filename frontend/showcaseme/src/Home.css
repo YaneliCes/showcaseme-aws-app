@@ -1,0 +1,92 @@
+.dashboard-wrapper {
+  display: flex;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  background: #fafafa;
+  color: #000;
+}
+
+.sidebar {
+  width: 220px;
+  background: #f5f5f5;
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-title {
+  font-size: 22px;
+  margin-bottom: 25px;
+}
+
+.sidebar-item {
+  margin-bottom: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.logout-btn {
+  padding: 10px;
+  background: #d9534f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* --- MAIN CONTENT --- */
+.dashboard-content {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+  max-width: 1000px; /* keeps content centered and clean */
+  margin: 0 auto;
+}
+
+.dashboard-username {
+  font-size: 34px;
+  margin-bottom: 5px;
+}
+
+.dashboard-subtitle {
+  color: #555;
+  margin-bottom: 35px;
+}
+
+/* --- PANELS --- */
+.panel-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 25px;
+}
+
+@media (min-width: 750px) {
+  .panel-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px;
+  border: 1px solid #e6e6e6;
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.04);
+}
+
+.panel h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.panel p {
+  color: #666;
+  margin: 0;
+}
