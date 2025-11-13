@@ -4,7 +4,7 @@ import Home from "./Home";
 import "./App.css";
 
 function App() {
-  const [message, setMessage] = useState("Loading...");
+  const [message, setMessage] = useState(""); //Loading...
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -14,7 +14,7 @@ function App() {
     fetch("http://10.0.2.238:3000/api/hello")
       .then(res => res.json())
       .then(data => setMessage(data.message))
-      .catch(() => setMessage("Backend not reachable"));
+      .catch(() => setMessage("")); //Backend not reachable
   }, []);
 
   const handleLogin = (e) => {
