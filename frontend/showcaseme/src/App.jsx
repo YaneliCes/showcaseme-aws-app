@@ -12,7 +12,7 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://10.0.2.238:3000/api/hello")
+    fetch("/api/hello")
       .then(res => res.json())
       .then(data => setMessage(data.message))
       .catch(() => setMessage(""));
