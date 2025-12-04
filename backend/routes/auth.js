@@ -76,9 +76,15 @@ router.post("/register", async (req, res) => {
 
 // POST /api/login
 router.post("/login", async (req, res) => {
+  console.log("=== /api/login HIT ===");
+  console.log("Raw body:", req.body);
+
   try {
     const { cleaned, errors } = validateLoginInput(req.body || {});
+    console.log("Cleaned login input:", cleaned, "Errors:", errors);
+
     if (errors.length > 0) {
+      console.log("Validation failed:", errors);
       return res.status(400).json({
         status: "error",
         message: errors[0],
@@ -87,19 +93,27 @@ router.post("/login", async (req, res) => {
     }
 
     const { identifier, password } = cleaned;
+    console.log("Using identifier:", identifier);
+
     const conn = await getConnection();
+    console.log("Got DB connection");
 
     try {
       const isEmail = identifier.includes("@");
       const field = isEmail ? "email" : "username";
       const lookupValue = isEmail ? identifier.toLowerCase() : identifier;
 
+      console.log("Login lookup field:", field, "value:", lookupValue);
+
       const rows = await conn.query(
         `SELECT * FROM Users WHERE ${field} = ? LIMIT 1`,
         [lookupValue]
       );
 
+      console.log("DB rows:", rows);
+
       if (!rows || rows.length === 0) {
+        console.log("No user found for", lookupValue);
         return res.status(401).json({
           status: "error",
           message: "Invalid credentials.",
@@ -107,9 +121,18 @@ router.post("/login", async (req, res) => {
       }
 
       const user = rows[0];
+      console.log("User row:", {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        passwordLen: user.password && user.password.length
+      });
 
       const match = await bcrypt.compare(password, user.password);
+      console.log("Password match result:", match);
+
       if (!match) {
+        console.log("Password mismatch for user", user.username);
         return res.status(401).json({
           status: "error",
           message: "Invalid credentials.",
@@ -121,6 +144,7 @@ router.post("/login", async (req, res) => {
         username: user.username,
         email: user.email,
       };
+      console.log("Session set for user:", req.session.user);
 
       return res.json({
         status: "success",
@@ -131,6 +155,7 @@ router.post("/login", async (req, res) => {
         },
       });
     } finally {
+      console.log("Releasing DB connection");
       conn.release();
     }
   } catch (err) {
