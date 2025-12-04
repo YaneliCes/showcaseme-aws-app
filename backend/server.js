@@ -1,19 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const bcrypt = require("bcryptjs");
 const session = require("express-session");
+const authRouter = require("./routes/auth");
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.APP_PORT || 3000;
 
-const { testQuery, getConnection } = require("./lib/db");
-const {
-  validateRegisterInput,
-  validateLoginInput,
-} = require("./validation");
+const { testQuery } = require("./lib/db");
 
 // CORS
 app.use(
@@ -36,10 +32,13 @@ app.use(
       httpOnly: true,
       sameSite: "lax",
       secure: false,
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: 1000 * 60 * 60 * 24,   // 1 day
     },
   })
 );
+
+// Auth routes (register, login, logout, session))
+app.use("/api", authRouter);
 
 // Health check
 app.get("/healthz", (req, res) => res.send("OK"));
@@ -58,183 +57,6 @@ app.get("/api/test-db", async (req, res) => {
     console.error("DB test error:", err);
     res.status(500).json({ ok: false, error: "DB connection failed" });
   }
-});
-
-// Register route
-app.post("/api/register", async (req, res) => {
-  try {
-    // Run central validation
-    const { cleaned, errors } = validateRegisterInput(req.body || {});
-    if (errors.length > 0) {
-      return res.status(400).json({
-        status: "error",
-        message: errors[0],  // send first error for simple UI
-        errors,              // full list if you ever want to show all
-      });
-    }
-
-    const { firstname, lastname, email, username, password } = cleaned;
-
-    const conn = await getConnection();
-
-    try {
-      const hash = await bcrypt.hash(password, 10);
-
-      await conn.query(
-        `INSERT INTO Users (email, username, first_name, last_name, password)
-         VALUES (?, ?, ?, ?, ?)`,
-        [email, username, firstname, lastname, hash]
-      );
-
-      // optional: auto-login after register
-      req.session.user = {
-        username,
-        email,
-      };
-
-      return res.status(201).json({
-        status: "success",
-        message: "User registered successfully.",
-        user: { username, email },
-      });
-    } catch (err) {
-      console.error("Register error:", err);
-      const msg = String(err.message || "");
-
-      if (msg.includes("Duplicate entry") && msg.includes("email")) {
-        return res.status(409).json({
-          status: "error",
-          message: "Email is already in use.",
-        });
-      }
-      if (msg.includes("Duplicate entry") && msg.includes("username")) {
-        return res.status(409).json({
-          status: "error",
-          message: "Username is already taken.",
-        });
-      }
-
-      return res.status(500).json({
-        status: "error",
-        message: "Failed to register user.",
-      });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("Register crash:", err);
-    return res.status(500).json({
-      status: "error",
-      message: "Unexpected server error.",
-    });
-  }
-});
-
-// Login route (creates session)
-app.post("/api/login", async (req, res) => {
-  try {
-    const { cleaned, errors } = validateLoginInput(req.body || {});
-    if (errors.length > 0) {
-      return res.status(400).json({
-        status: "error",
-        message: errors[0],
-        errors,
-      });
-    }
-
-    const { identifier, password } = cleaned;
-
-    const conn = await getConnection();
-
-    try {
-      // Decide if identifier is email or username
-      const isEmail = identifier.includes("@");
-      const field = isEmail ? "email" : "username";
-
-      const rows = await conn.query(
-        `SELECT * FROM Users WHERE ${field} = ? LIMIT 1`,
-        [identifier.toLowerCase()]
-      );
-
-      if (!rows || rows.length === 0) {
-        return res.status(401).json({
-          status: "error",
-          message: "Invalid credentials.",
-        });
-      }
-
-      const user = rows[0];
-
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) {
-        return res.status(401).json({
-          status: "error",
-          message: "Invalid credentials.",
-        });
-      }
-
-      // Save minimal info in session
-      req.session.user = {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      };
-
-      return res.json({
-        status: "success",
-        message: "Logged in successfully.",
-        user: {
-          username: user.username,
-          email: user.email,
-        },
-      });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("Login crash:", err);
-    return res.status(500).json({
-      status: "error",
-      message: "Unexpected server error.",
-    });
-  }
-});
-
-// Session check route
-app.get("/api/session", (req, res) => {
-  if (req.session && req.session.user) {
-    return res.json({
-      status: "success",
-      message: "Session active.",
-      username: req.session.user.username,
-      email: req.session.user.email,
-    });
-  }
-
-  return res.json({
-    status: "error",
-    message: "Not logged in.",
-  });
-});
-
-// Logout route
-app.post("/api/logout", (req, res) => {
-  if (!req.session) {
-    return res.json({ status: "success", message: "Already logged out." });
-  }
-
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Error destroying session:", err);
-      return res.status(500).json({
-        status: "error",
-        message: "Failed to log out.",
-      });
-    }
-
-    res.clearCookie("connect.sid");
-    return res.json({ status: "success", message: "Logged out." });
-  });
 });
 
 app.listen(PORT, "0.0.0.0", () =>
