@@ -1,82 +1,139 @@
-import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
-import Home from "./Home";
-import Register from "./pages/Register";
-import "./App.css";
+import React, { useState, useEffect, useContext } from "react";
+import "./Login.css";
+import Header from "../components/Header";
+import { Link, useNavigate } from "react-router-dom";
+import { FaUser, FaLock } from "react-icons/fa";
 
-function App() {
-  const [message, setMessage] = useState("");
-  const [email, setEmail] = useState("");
+import { UserContext } from "../components/UserContext";
+
+const Login = () => {
+  const { setUser } = useContext(UserContext);
+
+  const [identifier, setIdentifier] = useState(""); // username or email
   const [password, setPassword] = useState("");
+  const [serverResponse, setServerResponse] = useState(null);
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetch("/api/hello")
-      .then(res => res.json())
-      .then(data => setMessage(data.message))
-      .catch(() => setMessage(""));
-  }, []);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    navigate("/home");
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "identifier") setIdentifier(value);
+    else if (name === "password") setPassword(value);
   };
 
-  return (
-    <Routes>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setServerResponse(null);
 
-      {/* LOGIN PAGE */}
-      <Route
-        path="/"
-        element={
-          <div className="page-wrapper">
-            <div className="login-container">
-              <h1>Login</h1>
+    if (!identifier || !password) {
+      setServerResponse("Please enter your username/email and password.");
+      return;
+    }
 
-              <form className="login-form" onSubmit={handleLogin}>
-                <div className="input-group">
-                  <input 
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          identifier,
+          password,
+        }),
+      });
 
-                <div className="input-group">
-                  <input 
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
+      const json = await response.json();
+      console.log("Login response:", json);
 
-                <button type="submit" className="login-btn">Login</button>
-              </form>
+      if (!response.ok || json.status !== "success") {
+        setServerResponse(json.message || "Login failed. Please try again.");
+        return;
+      }
 
-              <p className="backend-status">{message}</p>
+      if (setUser) {
+        setUser({ username: json.user?.username || identifier });
+      }
 
-              {/* REGISTER BUTTON */}
-              <button 
-                className="login-btn" 
-                style={{ marginTop: "10px", background: "#28a745" }}
-                onClick={() => navigate("/register")}
-              >
-                Create Account
-              </button>
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Error during login:", error);
+      setServerResponse("Failed to login. Please try again.");
+    }
+  };
 
-            </div>
-          </div>
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/session", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const json = await res.json();
+        if (res.ok && json.status === "success" && json.username) {
+          if (setUser) {
+            setUser({ username: json.username });
+          }
+          navigate("/dashboard");
         }
-      />
+      } catch (error) {
+        console.error("Error checking session:", error);
+      }
+    };
 
-      <Route path="/home" element={<Home />} />
+    checkSession();
+  }, [navigate, setUser]);
 
-      <Route path="/register" element={<Register />} />
-    </Routes>
+  return (
+    <>
+      <Header />
+      <div className="login-pg">
+        <div className="login-wrapper">
+          <form className="login-form" onSubmit={handleSubmit}>
+            <h1>Login</h1>
+
+            <div className="form-control input-box">
+              <input
+                type="text"
+                name="identifier"
+                placeholder="Username or Email"
+                value={identifier}
+                onChange={handleChange}
+              />
+              <FaUser className="icon" />
+            </div>
+
+            <div className="form-control input-box">
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={password}
+                onChange={handleChange}
+              />
+              <FaLock className="icon" />
+            </div>
+
+            <input type="submit" value="Login" className="login-btn" />
+
+            <div className="register-link">
+              <p>
+                Don&apos;t have an account? <Link to="/register">Register</Link>
+              </p>
+            </div>
+
+            {serverResponse && (
+              <div className="server-response">
+                <p>{serverResponse}</p>
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+    </>
   );
-}
+};
 
-export default App;
+export default Login;
