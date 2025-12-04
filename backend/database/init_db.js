@@ -41,16 +41,31 @@ async function runMigrations() {
       const file = path.basename(fullPath);
       const sql = fs.readFileSync(fullPath, "utf8");
 
+      // Extract table name from filename
+      const tableMatch = sql.match(/CREATE TABLE IF NOT EXISTS\s+`?(\w+)`?/i);
+      const tableName = tableMatch ? tableMatch[1] : null;
+
       console.log(`\n=== Running ${file} ===`);
 
+      // Check if table exists
+      let exists = false;
+      if (tableName) {
+        const check = await conn.query(
+          `SHOW TABLES LIKE '${tableName}'`
+        );
+        exists = check.length > 0;
+      }
+
+      if (exists) {
+        console.log(`Skipped — table "${tableName}" already exists.`);
+        continue;
+      }
+
       try {
-        // For multi-statement files you may need 'multipleStatements: true' in pool config,
-        // or split the file manually on ';'. For simple single-statement files, this is fine.
         const res = await conn.query(sql);
         count++;
-        console.log(`Success (${file})`);
+        console.log(`Created table "${tableName}" successfully.`);
       } catch (err) {
-        // MySQL duplicate warnings (idempotent behavior)
         const msg = String(err.message || err);
         if (
           msg.includes("Duplicate entry") ||
@@ -58,7 +73,7 @@ async function runMigrations() {
           msg.includes("Duplicate key") ||
           msg.toLowerCase().includes("multiple primary key")
         ) {
-          console.warn(`Duplicate-ish warning for ${file} (probably safe):`);
+          console.warn(`Duplicate warning for ${file} (likely safe)`);
           console.warn("   ", msg);
         } else {
           console.error(`Error running ${file}:`);
