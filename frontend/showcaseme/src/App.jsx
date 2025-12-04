@@ -7,7 +7,7 @@ import Header from './components/Header';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Home from './pages/Home';
-// import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard';
 // import Plans from './pages/Plans';
 // import FindPlaces from './pages/FindPlaces';
 // import Ratings from './pages/Ratings';
@@ -23,8 +23,8 @@ function App() {
           {/* <Route path='home' element={<Home />} /> */}
           <Route path='login' element={<Login />} />
           <Route path='register' element={<Register />} />
-          {/* <Route path='dashboard' element={<Dashboard />} />
-          <Route path='plans' element={<Plans />} />
+          <Route path='dashboard' element={<Dashboard />} />
+          {/* <Route path='plans' element={<Plans />} />
           <Route path='findplaces' element={<FindPlaces />} />
           <Route path='ratings' element={<Ratings />} />
           <Route path='navbar' element={<Navbar />} />

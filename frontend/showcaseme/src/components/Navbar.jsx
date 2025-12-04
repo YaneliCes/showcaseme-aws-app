@@ -1,100 +1,104 @@
-import React, { useState, useEffect, useContext } from 'react';
-import './Navbar.css';
-import { Link, useNavigate } from "react-router-dom";
-import { NavLink } from "react-router-dom";
-import { MdOutlinePinDrop } from "react-icons/md";
-import TopNavigation from "@cloudscape-design/components/top-navigation";
-import Button from "@cloudscape-design/components/button";
-import { UserContext } from './UserContext';
+import React, { useState, useEffect, useContext } from "react";
+import "./Navbar.css";
+import { NavLink, useNavigate } from "react-router-dom";
+import { AiFillProduct } from "react-icons/ai";
+import { FaUserCircle } from "react-icons/fa";
+import { UserContext } from "./UserContext";
 
 const Navbar = () => {
-    const { user, setUser, notification } = useContext(UserContext);
-    const navigate = useNavigate();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { user, setUser } = useContext(UserContext);
+  const navigate = useNavigate();
 
-    const handleLogout = async () => {
-        try {
-            const response = await fetch('http://10.0.0.10:3000/api/logout', {
-                method: 'POST',
-                credentials: 'include',
-            });
-
-            if (response.ok) {
-                localStorage.removeItem('user');
-                setUser(null);
-                navigate('/login');
-            } else {
-                console.error('Logout failed');
-            }
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
     };
 
-    return (
-        <div className="navbar">
-        <TopNavigation
-            identity={{
-                href: "/dashboard",
-                title: (
-                    <span className="navbar-logo">
-                        <MdOutlinePinDrop className="navbar-logo-icon" />
-                        <span className="navbar-logo-text">ShowcaseMe</span>
-                    </span>
-                ),
-                logo: null
-            }}
-            utilities={[
-                {
-                    type: "button",
-                    text: (
-                        <NavLink to="/dashboard" className="nav-link" activeClassName="active">
-                            Dashboard
-                        </NavLink>
-                    ),
-                    href: "/dashboard",
-                },
-                {
-                    type: "button",
-                    text: (
-                        <NavLink to="/plans" className="nav-link" activeClassName="active">
-                            Create/Join Plan
-                        </NavLink>
-                    ),
-                    href: "/plans",
-                },
-                {
-                    type: "button",
-                    text: (
-                        <NavLink to="/findplaces" className="nav-link" activeClassName="active">
-                            Find Places
-                        </NavLink>
-                    ),
-                    href: "/findplaces",
-                },
-                {
-                    type: "button",
-                    text: (
-                        <NavLink to="/ratings" className="nav-link" activeClassName="active">
-                            Ratings
-                        </NavLink>
-                    ),
-                    href: "/ratings",
-                },
-                {
-                    type: "menu-dropdown",
-                    text: user ? `Welcome, ${user.username}` : "Guest",
-                    iconName: "user-profile",
-                    items: [
-                        { 
-                            id: "signout", 
-                            text: <Button onClick={handleLogout}>Sign out</Button>, 
-                        }
-                    ]
-                }
-            ]}                         
-        />
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      if (setUser) setUser(null);
+      navigate("/login");
+    }
+  };
+
+  const username = user?.username || "Account";
+
+  return (
+    <header className={`navbar ${isScrolled ? "scrolled" : ""}`}>
+      {/* Left: Logo */}
+      <NavLink to="/dashboard" className="logo">
+        <AiFillProduct className="logo-icon" />
+        ShowcaseMe
+      </NavLink>
+
+      {/* Center: Main nav */}
+      <nav className="navbar-menu">
+        <NavLink
+          to="/dashboard"
+          className={({ isActive }) =>
+            `nav-link ${isActive ? "active" : ""}`
+          }
+        >
+          Dashboard
+        </NavLink>
+
+        <NavLink
+          to="/profile"
+          className={({ isActive }) =>
+            `nav-link ${isActive ? "active" : ""}`
+          }
+        >
+          My Portfolio
+        </NavLink>
+
+        <NavLink
+          to="/browse"
+          className={({ isActive }) =>
+            `nav-link ${isActive ? "active" : ""}`
+          }
+        >
+          Browse
+        </NavLink>
+
+        <NavLink
+          to="/favorites"
+          className={({ isActive }) =>
+            `nav-link ${isActive ? "active" : ""}`
+          }
+        >
+          Favorites
+        </NavLink>
+      </nav>
+
+      {/* Right: User + Logout */}
+      <div className="navbar-right">
+        <div className="user-chip">
+          <FaUserCircle className="user-icon" />
+          <span className="user-name">{username}</span>
         </div>
-    );
+
+        <button className="logout-btn" type="button" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
+    </header>
+  );
 };
 
-export default Navbar
+export default Navbar;
