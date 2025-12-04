@@ -155,6 +155,16 @@ router.post("/login", async (req, res) => {
       };
       console.log("Session set for user:", req.session.user);
 
+      await logActivity(req, {
+        eventType: "login",
+        route: "/api/login",
+        metadata: {
+          id: userId,
+          username: user.username,
+          email: user.email,
+        },
+      });
+
       return res.json({
         status: "success",
         message: "Logged in successfully.",
@@ -209,9 +219,32 @@ router.post("/logout", (req, res) => {
       });
     }
 
+    logActivity(req, {
+      eventType: "logout",
+      route: "/api/logout",
+    });
+
     res.clearCookie("connect.sid");
     return res.json({ status: "success", message: "Logged out." });
   });
 });
+
+// POST /api/track-page
+router.post("/track-page", async (req, res) => {
+  try {
+    const { path } = req.body || {};
+
+    await logActivity(req, {
+      eventType: "page_view",
+      route: path || req.originalUrl,
+    });
+
+    return res.json({ status: "ok" });
+  } catch (err) {
+    console.error("Page tracking error:", err);
+    return res.status(500).json({ status: "error" });
+  }
+});
+
 
 module.exports = router;

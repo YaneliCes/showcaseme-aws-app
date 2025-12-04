@@ -13,8 +13,11 @@ import Dashboard from './pages/Dashboard';
 // import FindPlaces from './pages/FindPlaces';
 // import Ratings from './pages/Ratings';
 
+import { usePageTracking } from "./hooks/usePageTracking";
 
 function App() {
+  // log a page_view on every route change
+  usePageTracking();
   
   return (
   <UserProvider>
