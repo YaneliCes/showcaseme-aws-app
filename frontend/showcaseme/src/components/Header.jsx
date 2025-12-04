@@ -28,7 +28,7 @@ const Header = () => {
             <a href="/" className="logo"><AiFillProduct className="logo-icon"/>ShowcaseMe</a>
             <nav className='nav-menu'>
                 {/*<ul className="nav-head">*/}
-                <NavLink to="/" className="nav-link" activeClassName="active">Home</NavLink>
+                <NavLink to="/explore" className="nav-link" activeClassName="active">Explore</NavLink>
                 <NavLink to="/login" className="nav-link" activeClassName="active">Login</NavLink>
                 <NavLink to="/register" className="nav-link" activeClassName="active">Register</NavLink>
                 {/*</ul>*/}

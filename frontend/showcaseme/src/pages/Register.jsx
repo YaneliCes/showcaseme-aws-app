@@ -17,17 +17,17 @@ const Register = () => {
   const [confpassword, setConfPass] = useState("");
   const [serverResponse, setServerResponse] = useState(null);
 
-  const [message, setMessage] = useState("");
+//   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({}); // { firstname: "...", email: "...", ... }
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetch("/api/hello")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch(() => setMessage(""));
-  }, []);
+//   useEffect(() => {
+//     fetch("/api/hello")
+//       .then((res) => res.json())
+//       .then((data) => setMessage(data.message))
+//       .catch(() => setMessage(""));
+//   }, []);
 
   // Simple email regex
   const isValidEmail = (value) =>
@@ -311,7 +311,7 @@ const Register = () => {
             )}
           </form>
 
-          <p className="backend-status">{message}</p>
+          {/* <p className="backend-status">{message}</p> */}
         </div>
       </div>
     </>
