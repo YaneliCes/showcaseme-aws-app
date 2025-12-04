@@ -12,21 +12,85 @@ const Login = () => {
   const [identifier, setIdentifier] = useState(""); // username or email
   const [password, setPassword] = useState("");
   const [serverResponse, setServerResponse] = useState(null);
+  const [errors, setErrors] = useState({}); // { identifier: "...", password: "..." }
 
   const navigate = useNavigate();
 
+  const isValidEmail = (value) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const validateField = (name, value) => {
+    const trimmed = value.trim();
+
+    switch (name) {
+      case "identifier":
+        if (!trimmed) return "Username or email is required.";
+
+        if (trimmed.includes("@")) {
+          // treat like email
+          if (trimmed.length > 100) {
+            return "Too many characters. Max 100 characters.";
+          }
+          if (!isValidEmail(trimmed)) {
+            return "Please enter a valid email address.";
+          }
+        } else {
+          // treat like username
+          if (trimmed.length > 30) {
+            return "Too many characters. Max 30 characters.";
+          }
+        }
+        return "";
+
+      case "password":
+        if (!value) return "Password is required.";
+        if (value.length < 8) {
+          return "Password must be at least 8 characters.";
+        }
+        if (value.length > 60) {
+          return "Too many characters. Max 60 characters.";
+        }
+        return "";
+
+      default:
+        return "";
+    }
+  };
+
+  const validateAll = () => {
+    const current = { identifier, password };
+    const newErrors = {};
+
+    Object.keys(current).forEach((field) => {
+      const error = validateField(field, current[field]);
+      if (error) newErrors[field] = error;
+    });
+
+    setErrors(newErrors);
+    return newErrors;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (name === "identifier") setIdentifier(value);
     else if (name === "password") setPassword(value);
+
+    const fieldError = validateField(name, value);
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: fieldError,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerResponse(null);
 
-    if (!identifier || !password) {
-      setServerResponse("Please enter your username/email and password.");
+    const newErrors = validateAll();
+    if (Object.keys(newErrors).length > 0) {
+      setServerResponse("Please fix the highlighted fields.");
       return;
     }
 
@@ -101,8 +165,12 @@ const Login = () => {
                 placeholder="Username or Email"
                 value={identifier}
                 onChange={handleChange}
+                className={errors.identifier ? "input-error" : ""}
               />
               <FaUser className="icon" />
+              {errors.identifier && (
+                <p className="field-error">{errors.identifier}</p>
+              )}
             </div>
 
             <div className="form-control input-box">
@@ -112,8 +180,12 @@ const Login = () => {
                 placeholder="Password"
                 value={password}
                 onChange={handleChange}
+                className={errors.password ? "input-error" : ""}
               />
               <FaLock className="icon" />
+              {errors.password && (
+                <p className="field-error">{errors.password}</p>
+              )}
             </div>
 
             <input type="submit" value="Login" className="login-btn" />

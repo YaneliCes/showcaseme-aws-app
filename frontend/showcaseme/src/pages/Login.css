@@ -20,12 +20,13 @@ body {
 ─────────────────────────────────────────────── */
 .login-pg {
   width: 100%;
-  min-height: calc(100vh - 80px);
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px 20px 60px;
-  margin-top: 80px; /* accounts for fixed header */
+  padding: 120px 20px 40px;
+  margin-top: 0;
+  box-sizing: border-box;
 }
 
 /* ─────────────────────────────────────────────
@@ -78,6 +79,7 @@ body {
 .input-box {
   position: relative;
   width: 100%;
+  margin-bottom: 13px;
 }
 
 .input-box input {
@@ -109,6 +111,23 @@ body {
   transform: translateY(-50%);
   font-size: 1rem;
   color: #444;
+}
+
+/* ─────────────────────────────────────────────
+   VALIDATION (ERROR) STATES
+─────────────────────────────────────────────── */
+.input-error {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 4px rgba(248, 113, 113, 0.75);
+}
+
+.field-error {
+  position: absolute;
+  left: 16px;
+  bottom: -18px;
+  margin: 0;
+  font-size: 0.8rem;
+  color: #f87171;
 }
 
 /* ─────────────────────────────────────────────

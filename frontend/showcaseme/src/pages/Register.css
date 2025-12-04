@@ -20,12 +20,13 @@ body {
 ─────────────────────────────────────────────── */
 .reg-pg {
   width: 100%;
-  min-height: calc(100vh - 80px);
+  height: calc(100vh - 80px);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px 20px 60px;
+  padding: 40px 20px;
   margin-top: 80px;
+  box-sizing: border-box;
 }
 
 /* ─────────────────────────────────────────────
@@ -33,7 +34,7 @@ body {
 ─────────────────────────────────────────────── */
 .wrapper {
   width: 100%;
-  max-width: 450px;
+  max-width: 500px;
   background: rgba(255, 255, 255, 0.06);
   border: 1.5px solid rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(35px);
@@ -72,6 +73,7 @@ body {
 .input-box {
   position: relative;
   width: 100%;
+  margin-bottom: 13px;
 }
 
 .input-box input {
@@ -125,6 +127,23 @@ body {
 .register-btn:hover {
   background: #2563eb;
   transform: scale(1.03);
+}
+
+/* ─────────────────────────────────────────────
+   VALIDATION (ERROR) STATES
+─────────────────────────────────────────────── */
+.input-error {
+  border-color: #f87171 !important; /* red border for invalid fields */
+  box-shadow: 0 0 4px rgba(248, 113, 113, 0.75);
+}
+
+.field-error {
+  position: absolute;
+  left: 16px;
+  bottom: -18px;
+  margin: 0;
+  font-size: 0.8rem;
+  color: #f87171;
 }
 
 /* ─────────────────────────────────────────────
