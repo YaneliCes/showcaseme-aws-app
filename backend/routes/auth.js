@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const { getConnection } = require("../lib/db");
+const { logActivity } = require("../utils/activityLogger");
 const {
   validateRegisterInput,
   validateLoginInput,
@@ -35,6 +36,12 @@ router.post("/register", async (req, res) => {
       );
 
       req.session.user = { username, email };
+
+      await logActivity(req, {
+        eventType: "register",
+        route: "/api/register",
+        metadata: { username, email },
+      });
 
       return res.status(201).json({
         status: "success",
