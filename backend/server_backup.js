@@ -10,10 +10,6 @@ const app = express();
 const PORT = process.env.APP_PORT || 3000;
 
 const { testQuery, getConnection } = require("./lib/db");
-const {
-  validateRegisterInput,
-  validateLoginInput,
-} = require("./validation");
 
 // CORS
 app.use(
@@ -63,17 +59,14 @@ app.get("/api/test-db", async (req, res) => {
 // Register route
 app.post("/api/register", async (req, res) => {
   try {
-    // Run central validation
-    const { cleaned, errors } = validateRegisterInput(req.body || {});
-    if (errors.length > 0) {
+    const { firstname, lastname, email, username, password } = req.body || {};
+
+    if (!firstname || !lastname || !email || !username || !password) {
       return res.status(400).json({
         status: "error",
-        message: errors[0],  // send first error for simple UI
-        errors,              // full list if you ever want to show all
+        message: "All fields are required.",
       });
     }
-
-    const { firstname, lastname, email, username, password } = cleaned;
 
     const conn = await getConnection();
 
@@ -133,16 +126,15 @@ app.post("/api/register", async (req, res) => {
 // Login route (creates session)
 app.post("/api/login", async (req, res) => {
   try {
-    const { cleaned, errors } = validateLoginInput(req.body || {});
-    if (errors.length > 0) {
+    const { identifier, password } = req.body || {};
+    // identifier can be username OR email
+
+    if (!identifier || !password) {
       return res.status(400).json({
         status: "error",
-        message: errors[0],
-        errors,
+        message: "Identifier and password are required.",
       });
     }
-
-    const { identifier, password } = cleaned;
 
     const conn = await getConnection();
 
@@ -153,7 +145,7 @@ app.post("/api/login", async (req, res) => {
 
       const rows = await conn.query(
         `SELECT * FROM Users WHERE ${field} = ? LIMIT 1`,
-        [identifier.toLowerCase()]
+        [identifier]
       );
 
       if (!rows || rows.length === 0) {
@@ -200,7 +192,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// Session check route
+// Session route (check if logged in)
 app.get("/api/session", (req, res) => {
   if (req.session && req.session.user) {
     return res.json({
@@ -217,7 +209,7 @@ app.get("/api/session", (req, res) => {
   });
 });
 
-// Logout route
+// Logout route (destroy session)
 app.post("/api/logout", (req, res) => {
   if (!req.session) {
     return res.json({ status: "success", message: "Already logged out." });

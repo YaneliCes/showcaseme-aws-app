@@ -1,86 +1,205 @@
-/* Reset */
-body, html, #root {
-  height: 100%;
+/* ─────────────────────────────────────────────
+   GLOBAL RESET (safe duplicate of Register.css)
+─────────────────────────────────────────────── */
+* {
   margin: 0;
   padding: 0;
-  background: #efefef;
-  font-family: Arial, sans-serif;
+  box-sizing: border-box;
 }
 
-.page-wrapper {
+body {
+  font-family: "Poppins", sans-serif;
+  background: #0f172a;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────────────────────────
+   PAGE WRAPPER
+─────────────────────────────────────────────── */
+.login-pg {
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  width: 100vw;
-}
-
-/* Login card */
-.login-container {
-  width: 400px;
-  padding: 25px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-.login-container h1 {
-  text-align: center;
-  color: #000;
-}
-
-.login-container p {
-  margin-top: 25px;
-}
-
-/* Inputs */
-.input-group {
-  margin-bottom: 15px;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  
+  padding: 120px 20px 40px;
+  margin-top: 0;
   box-sizing: border-box;
-  background: #ffffff !important;
-  color: #000 !important;
-  
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 15px;
 }
 
-input:focus {
-  background: rgba(168, 212, 238, 0.31) !important;
-  outline: none; /* optional, removes blue border */
-}
-
-input:-webkit-autofill,
-input:-webkit-autofill:focus {
-  background: rgba(227, 232, 243, 0.809) !important;
-  -webkit-box-shadow: 0 0 0px 1000px rgba(227, 237, 243, 0.809) inset !important;
-  -webkit-text-fill-color: #000 !important; 
-}
-
-/* Button */
-.login-btn {
+/* ─────────────────────────────────────────────
+   FORM CARD
+─────────────────────────────────────────────── */
+.login-wrapper {
   width: 100%;
-  padding: 12px;
-  background: #007aff;
-  color: white;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(35px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  border-radius: 14px;
+  padding: 32px 28px;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+/* Smooth fade animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-form h1 {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 12px;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ─────────────────────────────────────────────
+   INPUT FIELDS (reusing Register style)
+─────────────────────────────────────────────── */
+.input-box {
+  position: relative;
+  width: 100%;
+  margin-bottom: 13px;
+}
+
+.input-box input {
+  width: 100%;
+  height: 48px;
+  border-radius: 40px;
+  border: 1.8px solid rgba(255, 255, 255, 0.25);
+  padding: 12px 15px 12px 48px;
+  font-size: 0.95rem;
+  outline: none;
+  background: #ffffff;
+  color: #000;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.input-box input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0px 0px 5px #3b82f6;
+}
+
+.input-box input::placeholder {
+  color: #888;
+}
+
+.input-box .icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: #444;
+}
+
+/* ─────────────────────────────────────────────
+   VALIDATION (ERROR) STATES
+─────────────────────────────────────────────── */
+.input-error {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 4px rgba(248, 113, 113, 0.75);
+}
+
+.field-error {
+  position: absolute;
+  left: 16px;
+  bottom: -18px;
+  margin: 0;
+  font-size: 0.8rem;
+  color: #f87171;
+}
+
+/* ─────────────────────────────────────────────
+   LOGIN BUTTON
+─────────────────────────────────────────────── */
+.login-btn {
+  background: #3b82f6;
   border: none;
-  border-radius: 6px;
+  color: #fff;
+  padding: 13px 0;
+  border-radius: 40px;
+  margin-top: 6px;
   cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: 0.25s;
 }
 
 .login-btn:hover {
-  background: #0062cc;
+  background: #2563eb;
+  transform: scale(1.03);
 }
 
-/* Backend message */
-.backend-status {
+/* ─────────────────────────────────────────────
+   REGISTER LINK
+─────────────────────────────────────────────── */
+.register-link {
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.register-link a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.register-link a:hover {
+  opacity: 0.8;
+}
+
+/* ─────────────────────────────────────────────
+   SERVER RESPONSE
+─────────────────────────────────────────────── */
+.server-response {
   margin-top: 10px;
   text-align: center;
-  color: #555;
+  padding: 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.server-response.success {
+  color: #4ade80; /* green */
+}
+
+.server-response.error {
+  color: #f87171; /* red */
+}
+
+/* ─────────────────────────────────────────────
+   RESPONSIVE
+─────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .login-wrapper {
+    padding: 26px 22px;
+  }
+
+  .login-form h1 {
+    font-size: 1.8rem;
+  }
 }
