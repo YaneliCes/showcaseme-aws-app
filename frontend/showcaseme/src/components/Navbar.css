@@ -1,0 +1,90 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Popins', sans-serif;
+}
+
+
+[class*="awsui_top-navigation"] {
+    background-color: rgb(83, 140, 211) !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+
+[class*="awsui_top-navigation"] * {
+    color: white !important;
+    font-family: "Poppins", sans-serif !important;
+}
+
+[class*="awsui_top-navigation__container"] {
+    min-height: 1000px !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+}
+
+[class*="awsui_top-navigation"] .awsui_text_m5h9f_1hxt9_239 {
+    font-size: 1.15em !important;
+    font-weight: 600;
+}
+
+.navbar-logo {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-logo-icon {
+    font-size: 1.5em;
+    margin-right: 8px;
+}
+
+.navbar-logo-text {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 2px;
+}
+.nav-link {
+    position: relative;
+    font-size: 1.1em;
+    font-weight: 800;
+    color: white;
+    text-decoration: none;
+    margin-left: 40px;
+}
+
+.nav-link a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 100%;
+    height: 3px;
+    background: white;
+    border-radius: 5px;
+    transform: scaleX(0);
+    transition: .5s;
+}
+
+.nav-link a:hover::after {
+    transform: scaleX(1);
+}
+
+.nav-link .active {
+    position: relative;
+    font-size: 1.1em;
+    font-weight: 800;
+    color: white;
+    text-decoration: none;
+}
+
+.nav-link .active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 100%;
+    height: 3px;
+    background: white;
+    border-radius: 5px;
+    transform: scaleX(1);
+}
