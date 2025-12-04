@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS `Courses` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(200) NOT NULL,
+    `provider` VARCHAR(100) NULL,
+    `url` VARCHAR(255) NOT NULL,
+    `description` TEXT NULL
+);
