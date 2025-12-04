@@ -1,82 +1,39 @@
-import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
-import Home from "./Home";
-import Register from "./Register";
-import "./App.css";
+import { useState } from 'react';
+import './App.css';
+import { Link, Routes, Route, Navigate } from 'react-router-dom';
+import { UserProvider } from './components/UserContext';
+import Navbar from './components/Navbar';
+import Header from './components/Header';
+import Register from './pages/Register';
+// import Login from './pages/Login';
+import Home from './pages/Home';
+// import Dashboard from './pages/Dashboard';
+// import Plans from './pages/Plans';
+// import FindPlaces from './pages/FindPlaces';
+// import Ratings from './pages/Ratings';
+
 
 function App() {
-  const [message, setMessage] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetch("/api/hello")
-      .then(res => res.json())
-      .then(data => setMessage(data.message))
-      .catch(() => setMessage(""));
-  }, []);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    navigate("/home");
-  };
-
+  
   return (
-    <Routes>
-
-      {/* LOGIN PAGE */}
-      <Route
-        path="/"
-        element={
-          <div className="page-wrapper">
-            <div className="login-container">
-              <h1>Login</h1>
-
-              <form className="login-form" onSubmit={handleLogin}>
-                <div className="input-group">
-                  <input 
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-
-                <div className="input-group">
-                  <input 
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-
-                <button type="submit" className="login-btn">Login</button>
-              </form>
-
-              <p className="backend-status">{message}</p>
-
-              {/* REGISTER BUTTON */}
-              <button 
-                className="login-btn" 
-                style={{ marginTop: "10px", background: "#28a745" }}
-                onClick={() => navigate("/register")}
-              >
-                Create Account
-              </button>
-
-            </div>
-          </div>
-        }
-      />
-
-      <Route path="/home" element={<Home />} />
-
-      <Route path="/register" element={<Register />} />
-    </Routes>
+  <UserProvider>
+    <div> 
+        <Routes>
+          <Route path="/" element={<Home />} />
+          {/* <Route path='home' element={<Home />} />
+          <Route path='login' element={<Login />} /> */}
+          <Route path='register' element={<Register />} />
+          {/* <Route path='dashboard' element={<Dashboard />} />
+          <Route path='plans' element={<Plans />} />
+          <Route path='findplaces' element={<FindPlaces />} />
+          <Route path='ratings' element={<Ratings />} />
+          <Route path='navbar' element={<Navbar />} />
+          <Route path='header' element={<Header />} /> */}
+        </Routes>
+    </div>
+  </UserProvider>
   );
+
 }
 
-export default App;
+export default App
