@@ -1,75 +1,23 @@
 const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
-const session = require("express-session");
-
-dotenv.config();
-
-const app = express();
-const PORT = process.env.APP_PORT || 3000;
-
-const { testQuery, getConnection } = require("./lib/db");
+const { getConnection } = require("../lib/db");
 const {
   validateRegisterInput,
   validateLoginInput,
-} = require("./validation");
+} = require("../utils/validation");
 
-// CORS
-app.use(
-  cors({
-    origin: true,        // reflect the request origin
-    credentials: true,   // allow cookies
-  })
-);
+const router = express.Router();
 
-// JSON body parsing
-app.use(express.json());
-
-// Session middleware
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "dev-secret-change-me",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-    },
-  })
-);
-
-// Health check
-app.get("/healthz", (req, res) => res.send("OK"));
-
-// Simple API route
-app.get("/api/hello", (req, res) => {
-  res.json({ message: "Hello from Express backend!" });
-});
-
-// DB test route
-app.get("/api/test-db", async (req, res) => {
+// POST /api/register
+router.post("/register", async (req, res) => {
   try {
-    const result = await testQuery();
-    res.json({ ok: true, result });
-  } catch (err) {
-    console.error("DB test error:", err);
-    res.status(500).json({ ok: false, error: "DB connection failed" });
-  }
-});
-
-// Register route
-app.post("/api/register", async (req, res) => {
-  try {
-    // Run central validation
     const { cleaned, errors } = validateRegisterInput(req.body || {});
+
     if (errors.length > 0) {
       return res.status(400).json({
         status: "error",
-        message: errors[0],  // send first error for simple UI
-        errors,              // full list if you ever want to show all
+        message: errors[0],
+        errors,
       });
     }
 
@@ -86,11 +34,7 @@ app.post("/api/register", async (req, res) => {
         [email, username, firstname, lastname, hash]
       );
 
-      // optional: auto-login after register
-      req.session.user = {
-        username,
-        email,
-      };
+      req.session.user = { username, email };
 
       return res.status(201).json({
         status: "success",
@@ -130,8 +74,8 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// Login route (creates session)
-app.post("/api/login", async (req, res) => {
+// POST /api/login
+router.post("/login", async (req, res) => {
   try {
     const { cleaned, errors } = validateLoginInput(req.body || {});
     if (errors.length > 0) {
@@ -143,17 +87,16 @@ app.post("/api/login", async (req, res) => {
     }
 
     const { identifier, password } = cleaned;
-
     const conn = await getConnection();
 
     try {
-      // Decide if identifier is email or username
       const isEmail = identifier.includes("@");
       const field = isEmail ? "email" : "username";
+      const lookupValue = isEmail ? identifier.toLowerCase() : identifier;
 
       const rows = await conn.query(
         `SELECT * FROM Users WHERE ${field} = ? LIMIT 1`,
-        [identifier.toLowerCase()]
+        [lookupValue]
       );
 
       if (!rows || rows.length === 0) {
@@ -173,7 +116,6 @@ app.post("/api/login", async (req, res) => {
         });
       }
 
-      // Save minimal info in session
       req.session.user = {
         id: user.id,
         username: user.username,
@@ -200,8 +142,8 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// Session check route
-app.get("/api/session", (req, res) => {
+// GET /api/session
+router.get("/session", (req, res) => {
   if (req.session && req.session.user) {
     return res.json({
       status: "success",
@@ -217,8 +159,8 @@ app.get("/api/session", (req, res) => {
   });
 });
 
-// Logout route
-app.post("/api/logout", (req, res) => {
+// POST /api/logout
+router.post("/logout", (req, res) => {
   if (!req.session) {
     return res.json({ status: "success", message: "Already logged out." });
   }
@@ -237,6 +179,4 @@ app.post("/api/logout", (req, res) => {
   });
 });
 
-app.listen(PORT, "0.0.0.0", () =>
-  console.log(`Backend running on port ${PORT}`)
-);
+module.exports = router;

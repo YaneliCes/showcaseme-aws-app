@@ -5,7 +5,7 @@ import { UserProvider } from './components/UserContext';
 import Navbar from './components/Navbar';
 import Header from './components/Header';
 import Register from './pages/Register';
-// import Login from './pages/Login';
+import Login from './pages/Login';
 import Home from './pages/Home';
 // import Dashboard from './pages/Dashboard';
 // import Plans from './pages/Plans';
@@ -20,8 +20,8 @@ function App() {
     <div> 
         <Routes>
           <Route path="/" element={<Home />} />
-          {/* <Route path='home' element={<Home />} />
-          <Route path='login' element={<Login />} /> */}
+          {/* <Route path='home' element={<Home />} /> */}
+          <Route path='login' element={<Login />} />
           <Route path='register' element={<Register />} />
           {/* <Route path='dashboard' element={<Dashboard />} />
           <Route path='plans' element={<Plans />} />
