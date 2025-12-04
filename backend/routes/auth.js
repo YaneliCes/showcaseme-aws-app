@@ -139,8 +139,10 @@ router.post("/login", async (req, res) => {
         });
       }
 
+      const userId = Number(user.id);
+
       req.session.user = {
-        id: user.id,
+        id: userId,
         username: user.username,
         email: user.email,
       };
@@ -150,6 +152,7 @@ router.post("/login", async (req, res) => {
         status: "success",
         message: "Logged in successfully.",
         user: {
+          id: userId,
           username: user.username,
           email: user.email,
         },
