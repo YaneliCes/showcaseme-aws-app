@@ -25,12 +25,12 @@ const Header = () => {
     return (
         <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
             
-            <a href="/" className="logo"><AiFillProduct className="logo-icon"/>ShowcaseMe</a>
-            <nav className='nav-menu'>
+            <a href="/" className="logo-header"><AiFillProduct className="logo-icon-header"/>ShowcaseMe</a>
+            <nav className='header-menu'>
                 {/*<ul className="nav-head">*/}
-                <NavLink to="/explore" className="nav-link" activeClassName="active">Explore</NavLink>
-                <NavLink to="/login" className="nav-link" activeClassName="active">Login</NavLink>
-                <NavLink to="/register" className="nav-link" activeClassName="active">Register</NavLink>
+                <NavLink to="/explore" className="header-link" activeClassName="active">Explore</NavLink>
+                <NavLink to="/login" className="header-link" activeClassName="active">Login</NavLink>
+                <NavLink to="/register" className="header-link" activeClassName="active">Register</NavLink>
                 {/*</ul>*/}
             </nav>
 
