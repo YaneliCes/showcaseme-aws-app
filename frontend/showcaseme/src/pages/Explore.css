@@ -2,187 +2,187 @@
    GLOBAL PAGE
 ─────────────────────────────────────────────── */
 .explore-page {
-  width: 100%;
-  min-height: 100vh;
-  background: #0f172a;
-  color: #fff;
-  padding-top: 120px;
-  overflow-x: hidden;
-  font-family: "Poppins", sans-serif;
+    width: 100%;
+    min-height: 100vh;
+    background: #0f172a;
+    color: #fff;
+    padding-top: 120px;
+    overflow-x: hidden;
+    font-family: "Poppins", sans-serif;
 }
 
 /* ─────────────────────────────────────────────
    HERO SECTION
 ─────────────────────────────────────────────── */
 .hero {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 45px;
-  padding: 60px 5%;
-  flex-wrap: wrap;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 45px;
+    padding: 60px 5%;
+    flex-wrap: wrap;
 }
 
 .hero-content {
-  max-width: 550px;
-  text-align: center;
+    max-width: 550px;
+    text-align: center;
 }
 
 .hero-content h1 {
-  font-size: 2.8rem;
-  font-weight: 700;
-  margin-bottom: 18px;
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 18px;
 }
 
 .hero-content p {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #cbd5e1;
-  margin-bottom: 30px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #cbd5e1;
+    margin-bottom: 30px;
 }
 
 /* ─────────────────────────────────────────────
    BUTTON GROUP
 ─────────────────────────────────────────────── */
 .hero-buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 16px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 /* Base button styling (scoped to explore page) */
 .explore-page .btn-primary,
 .explore-page .btn-outline {
-  padding: 14px 36px;
-  border-radius: 40px;
-  font-weight: 700;
-  font-size: 1.25rem !important; /* ⬅ bigger + forced */
-  text-decoration: none;
-  transition: 0.25s ease-in-out;
-  cursor: pointer;
-  display: inline-block;
+    padding: 14px 36px;
+    border-radius: 40px;
+    font-weight: 700;
+    font-size: 1.25rem !important; /* ⬅ bigger + forced */
+    text-decoration: none;
+    transition: 0.25s ease-in-out;
+    cursor: pointer;
+    display: inline-block;
 }
 
 /* Primary CTA */
 .explore-page .btn-primary {
-  background: #3b82f6;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    background: #3b82f6;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .explore-page .btn-primary:hover {
-  background: #2563eb;
-  transform: translateY(-3px) scale(1.03);
+    background: #2563eb;
+    transform: translateY(-3px) scale(1.03);
 }
 
 /* Outline CTA */
 .explore-page .btn-outline {
-  border: 2px solid #93c5fd;
-  color: #93c5fd;
-  background: transparent;
+    border: 2px solid #93c5fd;
+    color: #93c5fd;
+    background: transparent;
 }
 
 .explore-page .btn-outline:hover {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: #fff;
-  transform: translateY(-3px) scale(1.03);
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #fff;
+    transform: translateY(-3px) scale(1.03);
 }
 
 /* Larger CTA (bottom section) */
 .explore-page .btn-lg {
-  width: 100%;
-  max-width: 540px;
-  margin: 22px auto 0;
-  padding: 15px 0px;
-  font-size: 1.3rem !important;
-  font-weight: 700;
+    width: 100%;
+    max-width: 540px;
+    margin: 22px auto 0;
+    padding: 15px 0px;
+    font-size: 1.3rem !important;
+    font-weight: 700;
 }
 
 /* ─────────────────────────────────────────────
    FEATURES SECTION
 ─────────────────────────────────────────────── */
 .features {
-  margin-top: 90px;
-  padding: 0 5% 60px;
-  text-align: center;
+    margin-top: 90px;
+    padding: 0 5% 60px;
+    text-align: center;
 }
 
 .features h2 {
-  font-size: 2rem;
-  margin-bottom: 30px;
+    font-size: 2rem;
+    margin-bottom: 30px;
 }
 
 .feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 28px;
 }
 
 .feature-card {
-  background: rgba(255, 255, 255, 0.06);
-  padding: 22px;
-  border-radius: 14px;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-  transition: 0.3s;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 22px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    transition: 0.3s;
 }
 
 .feature-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+    transform: translateY(-6px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
 .feature-card h3 {
-  margin-bottom: 12px;
+    margin-bottom: 12px;
 }
 
 .feature-icon {
-  font-size: 2.4rem;
-  color: #60a5fa;
-  margin-bottom: 10px;
+    font-size: 2.4rem;
+    color: #60a5fa;
+    margin-bottom: 10px;
 }
 
 /* ─────────────────────────────────────────────
    CTA FINAL
 ─────────────────────────────────────────────── */
 .cta {
-  background: rgba(255, 255, 255, 0.08);
-  margin-top: 90px;
-  padding: 60px 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  text-align: center;
+    background: rgba(255, 255, 255, 0.08);
+    margin-top: 90px;
+    padding: 60px 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    text-align: center;
 }
 
 .cta h2 {
-  font-size: 2rem;
-  margin-bottom: 10px;
+    font-size: 2rem;
+    margin-bottom: 10px;
 }
 
 .cta p {
-  font-size: 1.05rem;
-  margin-bottom: 22px;
-  color: #cbd5e1;
+    font-size: 1.05rem;
+    margin-bottom: 22px;
+    color: #cbd5e1;
 }
 
 /* ─────────────────────────────────────────────
    RESPONSIVE
 ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .hero-content h1 {
-    font-size: 2.2rem;
-  }
+    .hero-content h1 {
+        font-size: 2.2rem;
+    }
 
-  .hero-buttons {
-    flex-direction: column;
-    gap: 12px;
-  }
+    .hero-buttons {
+        flex-direction: column;
+        gap: 12px;
+    }
 
-  .explore-page .btn-primary,
-  .explore-page .btn-outline {
-    width: 100%;
-    max-width: 320px;
-    margin: 0 auto;
-  }
+    .explore-page .btn-primary,
+    .explore-page .btn-outline {
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+    }
 }
