@@ -2,192 +2,217 @@
    GLOBAL RESET
 ─────────────────────────────────────────────── */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+/* IMPORTANT:
+   If your Login.css also styles body, you can remove this block
+   and keep the background controlled globally in App.css instead.
+*/
 body {
-  font-family: "Poppins", sans-serif;
-  background: #0f172a; /* deep blue backdrop */
-  min-height: 100vh; 
-  width: 100%;
-  overflow-x: hidden;
+    font-family: "Poppins", sans-serif;
+    background: #0f172a;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 /* ─────────────────────────────────────────────
    PAGE WRAPPER
 ─────────────────────────────────────────────── */
 .reg-pg {
-  width: 100%;
-  height: calc(100vh - 80px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-  margin-top: 80px;
-  box-sizing: border-box;
+    width: 100%;
+    min-height: 100vh;
+    margin-top: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 16px 0 16px;
 }
 
 /* ─────────────────────────────────────────────
    FORM CARD
 ─────────────────────────────────────────────── */
-.wrapper {
-  width: 100%;
-  max-width: 500px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(35px);
-  box-shadow: 0 8px 25px rgba(0,0,0,.25);
-  color: #fff;
-  border-radius: 14px;
-  padding: 35px 30px;
-  animation: fadeIn 0.4s ease-in-out;
+.reg-pg .wrapper {
+    width: min(92vw, 420px);
+    max-width: 480px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    color: #fff;
+    border-radius: 14px;
+    padding: 20px 30px 20px 30px;
+    animation: regFadeIn 0.4s ease-in-out;
 }
 
-/* Smooth fade animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes regFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.reg-form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+/* ─────────────────────────────────────────────
+   FORM LAYOUT
+─────────────────────────────────────────────── */
+.reg-pg .reg-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.reg-form h1 {
-  font-size: 2.1rem;
-  text-align: center;
-  margin-bottom: 18px;
-  color: #fff;
-  font-weight: 600;
-  letter-spacing: .5px;
+.reg-pg .reg-form h1 {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 /* ─────────────────────────────────────────────
    INPUT FIELDS
 ─────────────────────────────────────────────── */
-.input-box {
-  position: relative;
-  width: 100%;
-  margin-bottom: 13px;
+.reg-pg .input-box {
+    position: relative;
+    width: 100%;
+    margin-bottom: 17px;
 }
 
-.input-box input {
-  width: 100%;
-  height: 48px;
-  border-radius: 40px;
-  border: 1.8px solid rgba(255,255,255,.25);
-  padding: 12px 15px 12px 48px;
-  font-size: 0.95rem;
-  outline: none;
-  background: #ffffff;
-  color: #000;
-  transition: border .2s;
+.reg-pg .input-box input {
+    width: 100%;
+    height: 40px;
+    border-radius: 40px;
+    border: 1.8px solid rgba(255, 255, 255, 0.22);
+    padding: 10px 14px 10px 44px;
+    font-size: 0.95rem;
+    outline: none;
+    background: #ffffff;
+    color: #0b1220;
+    transition: border 0.2s, box-shadow 0.2s;
 }
 
-.input-box input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0px 0px 5px #3b82f6;
+.reg-pg .input-box input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
-.input-box input::placeholder {
-  color: #888;
+.reg-pg .input-box input::placeholder {
+    color: #6b7280;
 }
 
-.input-box .icon {
-  position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1rem;
-  color: #444;
+.reg-pg .input-box .icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.95rem;
+    color: #374151;
 }
 
 /* ─────────────────────────────────────────────
    REGISTER BUTTON
 ─────────────────────────────────────────────── */
-.register-btn {
-  background: #3b82f6;
-  border: none;
-  color: #fff;
-  padding: 13px 0;
-  border-radius: 40px;
-  margin-top: 10px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  transition: .25s;
+.reg-pg .register-btn {
+    background: #3b82f6;
+    border: none;
+    color: #fff;
+    padding: 13px 0;
+    border-radius: 40px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: .25s;
 }
 
-.register-btn:hover {
-  background: #2563eb;
-  transform: scale(1.03);
+.reg-pg .register-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.reg-pg .register-btn:active {
+    transform: translateY(0px);
 }
 
 /* ─────────────────────────────────────────────
    VALIDATION (ERROR) STATES
 ─────────────────────────────────────────────── */
-.input-error {
-  border-color: #f87171 !important; /* red border for invalid fields */
-  box-shadow: 0 0 4px rgba(248, 113, 113, 0.75);
+.reg-pg .input-error {
+    border-color: #f87171 !important;
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.22) !important;
 }
 
-.field-error {
-  position: absolute;
-  left: 16px;
-  bottom: -18px;
-  margin: 0;
-  font-size: 0.8rem;
-  color: #f87171;
+.reg-pg .field-error {
+    position: absolute;
+    left: 16px;
+    bottom: -20px;
+    margin: 0;
+    font-size: 0.78rem;
+    color: #fca5a5;
 }
 
 /* ─────────────────────────────────────────────
    LOGIN LINK
 ─────────────────────────────────────────────── */
-.login-link {
-  font-size: 0.9rem;
-  text-align: center;
-  margin-top: 10px;
+.reg-pg .login-link {
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 10px;
 }
 
-.login-link a {
-  color: #fff;
-  font-weight: 600;
-  text-decoration: underline;
+.reg-pg .login-link a {
+    color: #fff;
+    font-weight: 600;
+    text-decoration: underline;
 }
 
-.login-link a:hover {
-  opacity: .8;
+.reg-pg .login-link a:hover {
+    opacity: 0.8;
 }
 
 /* ─────────────────────────────────────────────
    SERVER RESPONSE
 ─────────────────────────────────────────────── */
-.server-response {
-  margin-top: 10px;
-  text-align: center;
-  padding: 8px;
-  border-radius: 6px;
-  font-weight: 600;
-  background: rgba(0,0,0,.35);
+.reg-pg .server-response {
+    margin-top: 4px;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.35);
 }
 
-.server-response.success { color: #4ade80; } /* green */
-.server-response.error   { color: #f87171; } /* red */
+.reg-pg .server-response.success {
+    color: #4ade80;
+}
+
+.reg-pg .server-response.error {
+    color: #f87171;
+}
 
 /* ─────────────────────────────────────────────
    RESPONSIVE
 ─────────────────────────────────────────────── */
-@media(max-width: 480px){
-  .wrapper {
-    padding: 28px 22px;
-  }
-  .reg-form h1 {
-    font-size: 1.8rem;
-  }
+@media (max-width: 480px) {
+    .reg-pg {
+        padding: 12px 12px 120px;
+    }
+
+    .reg-pg .wrapper {
+        max-width: 360px;
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .reg-pg .reg-form h1 {
+        font-size: 1.6rem;
+    }
+
+    .reg-pg .input-box input {
+        height: 40px;
+        font-size: 0.9rem;
+    }
 }

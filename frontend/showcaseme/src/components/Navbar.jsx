@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useContext } from "react";
 import "./Navbar.css";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AiFillProduct } from "react-icons/ai";
 import { FaUserCircle } from "react-icons/fa";
 import { UserContext } from "./UserContext";
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const { user, setUser } = useContext(UserContext);
-  const navigate = useNavigate();
+    const [isScrolled, setIsScrolled] = useState(false);
+    const { user, setUser } = useContext(UserContext);
+    const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+        if (window.scrollY > 50) {
+            setIsScrolled(true);
+        } else {
+            setIsScrolled(false);
+        }
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -25,15 +25,16 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+        await fetch("/api/logout", {
+            method: "POST",
+            credentials: "include",
+        });
     } catch (err) {
-      console.error("Logout error:", err);
+        console.error("Logout error:", err);
     } finally {
-      if (setUser) setUser(null);
-      navigate("/login");
+        localStorage.removeItem("user");
+        if (setUser) setUser(null);
+        navigate("/login");
     }
   };
 
@@ -42,59 +43,59 @@ const Navbar = () => {
   return (
     <header className={`navbar ${isScrolled ? "scrolled" : ""}`}>
       {/* Left: Logo */}
-      <NavLink to="/dashboard" className="logo">
-        <AiFillProduct className="logo-icon" />
-        ShowcaseMe
+      <NavLink to="/dashboard" className="logo-nav">
+            <AiFillProduct className="logo-icon" />
+            ShowcaseMe
       </NavLink>
 
       {/* Center: Main nav */}
       <nav className="navbar-menu">
         <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `nav-link ${isActive ? "active" : ""}`
-          }
+            to="/dashboard"
+            className={({ isActive }) =>
+                `nav-link ${isActive ? "active" : ""}`
+            }
         >
-          Dashboard
+            Dashboard
         </NavLink>
 
         <NavLink
-          to="/profile"
-          className={({ isActive }) =>
-            `nav-link ${isActive ? "active" : ""}`
-          }
+            to="/feed"
+            className={({ isActive }) =>
+                `nav-link ${isActive ? "active" : ""}`
+            }
         >
-          My Portfolio
+            Feed
         </NavLink>
 
         <NavLink
-          to="/browse"
-          className={({ isActive }) =>
-            `nav-link ${isActive ? "active" : ""}`
-          }
+            to="/browse-network"
+            className={({ isActive }) =>
+                `nav-link ${isActive ? "active" : ""}`
+            }
         >
-          Browse
+            My Network
         </NavLink>
 
         <NavLink
-          to="/favorites"
-          className={({ isActive }) =>
-            `nav-link ${isActive ? "active" : ""}`
-          }
+            to="/learn"
+            className={({ isActive }) =>
+                `nav-link ${isActive ? "active" : ""}`
+            }
         >
-          Favorites
+            Learn
         </NavLink>
       </nav>
 
       {/* Right: User + Logout */}
       <div className="navbar-right">
         <div className="user-chip">
-          <FaUserCircle className="user-icon" />
-          <span className="user-name">{username}</span>
+            <FaUserCircle className="user-icon" />
+            <span className="user-name">{username}</span>
         </div>
 
         <button className="logout-btn" type="button" onClick={handleLogout}>
-          Logout
+            Logout
         </button>
       </div>
     </header>

@@ -44,3 +44,7 @@ Thumbs.db
 *.class
 *.o
 *.so
+
+# Other
+docker-compose.*.yml
+vite.config copy.js
