@@ -18,9 +18,8 @@ const LOCALE = "en";
 export default function Dashboard() {
     const navigate = useNavigate();
     const { user, setUser } = useContext(UserContext);
-
     const [loading, setLoading] = useState(true);
-    const [navigationOpen, setNavigationOpen] = useState(true);
+    const [navigationOpen, setNavigationOpen] = useState(false);
 
     const [colorMode, setColorMode] = useState(() => {
         const saved = localStorage.getItem("cs-color-mode");
@@ -41,16 +40,9 @@ export default function Dashboard() {
         updated: null,
     });
     const [profileLoading, setProfileLoading] = useState(true);
-    // const [profile, setProfile] = useState({
-    //     title: "DEV",
-    //     industry: "TECH",
-    //     location: "NJ",
-    //     bio: "EXAMPLEEEEE",
-    // });
-
     const [editProfileOpen, setEditProfileOpen] = useState(false);
 
-    // Industry options
+    // Industry options data
     const [industries, setIndustries] = useState([]);
     const [industriesLoading, setIndustriesLoading] = useState(true);
 
@@ -60,89 +52,78 @@ export default function Dashboard() {
         return found ? { label: found.name, value: String(found.id) } : null;
     }, [profile.industryId, industries]);
 
-    // Demo sections
-    const projects = useMemo(
-        () => [
-            { id: "p1", name: "ShowcaseMe", stack: "React • Express • MariaDB", status: "Active" },
-            { id: "p2", name: "Trip Planner", stack: "React • Google Maps API", status: "In progress" },
-            { id: "p3", name: "Pentesting Run Book", stack: "Kali • SMB • Burp", status: "Active" },
-        ],
-        []
-    );
+    // Portfolio entry items data (projects, experiences, affiliations)
+    const [projects, setProjects] = useState([]);
+    const [experiences, setExperiences] = useState([]);
+    const [affiliations, setAffiliations] = useState([]);
+    const [entriesLoading, setEntriesLoading] = useState(true);
 
-    const experience = useMemo(
-        () => [
-            { id: "e1", role: "IT Intern", org: "Bruker", dates: "2024 – 2025" },
-            { id: "e2", role: "Student Developer", org: "NJIT", dates: "Projects & labs" },
-        ],
-        []
-    );
+    function safeHost(url) {
+        try {
+            if (!url) return "";
+            const u = url.startsWith("http") ? url : `https://${url}`;
+            return new URL(u).hostname;
+        } catch {
+            return "";
+        }
+    }
 
-    const affiliations = useMemo(
-        () => [
-            { id: "a1", name: "NJIT Cybersecurity Club" },
-            { id: "a2", name: "ACM (student member)" },
-        ],
-        []
-    );
+    // Skills data
+    const [skillsOpen, setSkillsOpen] = useState(false);
+    const [skillsLoading, setSkillsLoading] = useState(true);
 
-    const skills = useMemo(
-        () => ({
-            hard: [
-                "React",
-                "Node.js",
-                "Express",
-                "AWS (VPC/EC2/RDS/IAM)",
-                "SQL",
-                "Burp Suite",
-                "nmap",
-            ],
-            soft: [
-                "Communication",
-                "Problem solving",
-                "Teamwork",
-                "Presentation",
-                "Time management",
-            ],
-        }),
-        []
-    );
+    const [hardCatalog, setHardCatalog] = useState([]);
+    const [hardUserSkills, setHardUserSkills] = useState([]);
+    const [selectedHard, setSelectedHard] = useState(null);
 
-    // Check session on when it loads
+    const [softCatalog, setSoftCatalog] = useState([]);
+    const [softUserSkills, setSoftUserSkills] = useState([]);
+    const [selectedSoft, setSelectedSoft] = useState(null);
+
+    const loadSkills = async () => {
+        setSkillsLoading(true);
+        try {
+            const [hc, sc, hu, su] = await Promise.all([
+                fetch("/api/profile/skills/catalog?type=hard", { credentials: "include" }),
+                fetch("/api/profile/skills/catalog?type=soft", { credentials: "include" }),
+                fetch("/api/profile/skills?type=hard", { credentials: "include" }),
+                fetch("/api/profile/skills?type=soft", { credentials: "include" }),
+            ]);
+
+            const [hcj, scj, huj, suj] = await Promise.all([
+                hc.json(),
+                sc.json(),
+                hu.json(),
+                su.json(),
+            ]);
+
+            if (hc.ok && hcj.status === "success") setHardCatalog(hcj.skills || []);
+            if (sc.ok && scj.status === "success") setSoftCatalog(scj.skills || []);
+            if (hu.ok && huj.status === "success") setHardUserSkills(huj.skills || []);
+            if (su.ok && suj.status === "success") setSoftUserSkills(suj.skills || []);
+        } catch (err) {
+            console.error("loadSkills error:", err);
+        } finally {
+            setSkillsLoading(false);
+        }
+    };
+
+    // When the page loads, apply light/dark mode
     useEffect(() => {
-        const checkSession = async () => {
-            try {
-                const res = await fetch("/api/session", {
-                    method: "GET",
-                    credentials: "include",
-                });
-        
-                const json = await res.json();
-        
-                if (res.ok && json.status === "success" && json.username) {
-                    if (setUser) {
-                        setUser({ username: json.username, email: json.email });
-                    }
-                    // In the future you can fetch stats here from a /api/dashboard endpoint
-                    setLoading(false);
-                } else {
-                    navigate("/login");
-                }
-            } catch (err) {
-                console.error("Error checking session on dashboard:", err);
-                navigate("/login");
-            }
-        };
-    
-        checkSession();
-    }, [navigate, setUser]);
-    
+        const next = colorMode === "dark" ? Mode.Dark : Mode.Light;
+        applyMode(next);
+        localStorage.setItem("cs-color-mode", colorMode);
+    }, [colorMode]);
+
+    // When the page loads, verify session and load profile + stats + portfolio + skills
     useEffect(() => {
         let cancelled = false;
 
         const load = async () => {
             try {
                 setLoading(true);
+
+                await loadSkills();
 
                 // 1) Ensure session is valid
                 const sessionRes = await fetch("/api/session", {
@@ -164,15 +145,16 @@ export default function Dashboard() {
                 }
 
                 // 2) Fetch profile
-                const profRes = await fetch("/api/actions/profile", {
+                const profileRes = await fetch("/api/profile", {
                     method: "GET",
                     credentials: "include",
                 });
-                const profJson = await profRes.json();
+                const profileJson = await profileRes.json();
 
+                // If not cancelled, update profile
                 if (!cancelled) {
-                    if (profRes.ok && profJson.status === "success") {
-                        const p = profJson.profile || {};
+                    if (profileRes.ok && profileJson.status === "success") {
+                        const p = profileJson.profile || {};
                         setProfile({
                             bio: p.bio || "",
                             industryId: p.industry_id ?? null,
@@ -190,7 +172,7 @@ export default function Dashboard() {
                 }
 
                 // 2b) Fetch industries for dropdown
-                const industryRes = await fetch("/api/actions/industries", {
+                const industryRes = await fetch("/api/profile/industries", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -198,14 +180,14 @@ export default function Dashboard() {
 
                 // If not cancelled, update industries
                 if (!cancelled) {
-                    if (industryJson.ok && indJson.status === "success") {
-                        setIndustries(indJson.industries || []);
+                    if (industryRes.ok && industryJson.status === "success") {
+                        setIndustries(industryJson.industries || []);
                     }
                     setIndustriesLoading(false);
                 }
 
                 // 3) Fetch stats
-                const statsRes = await fetch("/api/actions/stats", {
+                const statsRes = await fetch("/api/profile/stats", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -218,11 +200,34 @@ export default function Dashboard() {
                     }
                     setStatsLoading(false);
                 }
+
+                // 4) Fetch portfolio previews (projects, experiences, affiliations)
+                const [projectRes, experienceRes, affiliationRes] = await Promise.all([
+                    fetch("/api/profile/entries?type=project", { method: "GET", credentials: "include" }),
+                    fetch("/api/profile/entries?type=job", { method: "GET", credentials: "include" }),
+                    fetch("/api/profile/entries?type=affiliation", { method: "GET", credentials: "include" }),
+                ]);
+
+                const [projectJson, experienceJson, affiliationJson] = await Promise.all([
+                    projectRes.json(),
+                    experienceRes.json(),
+                    affiliationRes.json(),
+                ]);
+
+                // If not cancelled, update portfolio
+                if (!cancelled) {
+                    if (projectRes.ok && projectJson.status === "success") setProjects(projectJson.entries || []);
+                    if (experienceRes.ok && experienceJson.status === "success") setExperiences(experienceJson.entries || []);
+                    if (affiliationRes.ok && affiliationJson.status === "success") setAffiliations(affiliationJson.entries || []);
+                    setEntriesLoading(false);
+                }
+
             } catch (err) {
                 console.error("Dashboard load error:", err);
                 if (!cancelled) {
                     setProfileLoading(false);
                     setStatsLoading(false);
+                    setEntriesLoading(false);
                 }
             } finally {
                 if (!cancelled) setLoading(false);
@@ -236,23 +241,9 @@ export default function Dashboard() {
         };
     }, [navigate, setUser]);
 
-
-    // // TEMP: allow dashboard without auth
-    // useEffect(() => {
-    //     setLoading(false);
-    // }, []);
-
-
-    useEffect(() => {
-        const next = colorMode === "dark" ? Mode.Dark : Mode.Light;
-        applyMode(next);
-        localStorage.setItem("cs-color-mode", colorMode);
-    }, [colorMode]);
-
-
+    // Profile data display values
     const displayName = user?.username || "User";
     const avatarLetter = displayName?.[0]?.toUpperCase() || "?";
-
     const industry = profile.industryName?.trim() ? profile.industryName : "Add industry (Edit profile)";
     const privacy = profile.privacy === "private" ? "Private" : "Public";
     const bio = profile.bio?.trim() ? profile.bio : "Add a short bio so people understand what you’re about.";
@@ -260,34 +251,64 @@ export default function Dashboard() {
     const location = [profile.city, profile.state, profile.country].filter(Boolean).join(", ") || "Add location (Edit profile)";
 
 
-    // Stat data
+    // Stat data display values
     const [stats, setStats] = useState({
         projects: 0,
-        experience: 0,
+        experiences: 0,
         affiliations: 0,
         hardSkills: 0,
         softSkills: 0,
         profileViewsToday: 0,
         favorites: 0,
     });
-
     const [statsLoading, setStatsLoading] = useState(true);
-    // const stats = useMemo(
-    //     () => ({
-    //         projects: projects.length,
-    //         experience: experience.length,
-    //         affiliations: affiliations.length,
-    //         hardSkills: skills.hard.length,
-    //         softSkills: skills.soft.length,
-    //     }),
-    //     [
-    //         projects.length,
-    //         experience.length,
-    //         affiliations.length,
-    //         skills.hard.length,
-    //         skills.soft.length,
-    //     ]
-    // );
+
+    // Skill handling functions
+    const addSkill = async (type) => {
+        const selected = type === "hard" ? selectedHard : selectedSoft;
+        if (!selected?.value) return;
+
+        try {
+            const res = await fetch("/api/profile/skills", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ skill_id: Number(selected.value) }),
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") {
+                console.error("Add skill failed:", json);
+                return;
+            }
+
+            await loadSkills();
+            if (type === "hard") setSelectedHard(null);
+            if (type === "soft") setSelectedSoft(null);
+        } catch (err) {
+            console.error("addSkill error:", err);
+        }
+    };
+
+    const removeSkill = async (skillId) => {
+        try {
+            const res = await fetch(`/api/profile/skills/${skillId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") {
+                console.error("Remove skill failed:", json);
+                return;
+            }
+
+            await loadSkills();
+        } catch (err) {
+            console.error("removeSkill error:", err);
+        }
+    };
+
 
     if (loading) return <div className="dash-loading">Loading...</div>;
 
@@ -311,11 +332,11 @@ export default function Dashboard() {
                             <SideNavigation
                                 header={{ href: "/dashboard", text: "Portfolio" }}
                                 items={[
-                                    { type: "link", text: "Profile", href: "/profile" },
-                                    { type: "link", text: "Projects", href: "/profile?tab=projects" },
-                                    { type: "link", text: "Experience", href: "/profile?tab=experience" },
-                                    { type: "link", text: "Affiliations", href: "/profile?tab=affiliations" },
-                                    { type: "link", text: "Skills", href: "/profile?tab=skills" },
+                                    { type: "link", text: "Profile", href: "/portfolio" },
+                                    { type: "link", text: "Projects", href: "/profile/manage?type=project" },
+                                    { type: "link", text: "Experiences", href: "/profile/manage?type=job" },
+                                    { type: "link", text: "Affiliations", href: "/profile/manage?type=affiliation" },
+                                    { type: "link", text: "Skills", href: "/dashboard" },
                                 ]}
                             />
                         }
@@ -332,10 +353,7 @@ export default function Dashboard() {
                                             </div>
 
                                             <div className="dashboard-headerRight">
-                                                <Button
-                                                    variant="normal"
-                                                    onClick={() => setColorMode((m) => (m === "dark" ? "light" : "dark"))}
-                                                >
+                                                <Button variant="normal" onClick={() => setColorMode((m) => (m === "dark" ? "light" : "dark"))}>
                                                     {colorMode === "dark" ? "Light mode" : "Dark mode"}
                                                 </Button>
                                             </div>
@@ -349,7 +367,7 @@ export default function Dashboard() {
                                                 {/* Top row */}
                                                 <div className="dash-profileTop">
                                                     <div className="dash-profileIdentity">
-                                                        <div className="dash-avatarLg">{avatarLetter}</div>
+                                                        <div className="dash-avatarCircle">{avatarLetter}</div>
 
                                                         <div className="dash-profileText">
                                                             <div className="dash-profileNameRow">
@@ -371,7 +389,7 @@ export default function Dashboard() {
                                                             Edit profile
                                                         </Button>
 
-                                                        <Button variant="primary" onClick={() => navigate("/profile")}>
+                                                        <Button variant="primary" onClick={() => navigate("/portfolio")}>
                                                             <FaFolderOpen style={{ marginRight: 8 }} />
                                                             View portfolio
                                                         </Button>
@@ -409,8 +427,8 @@ export default function Dashboard() {
                                                     </div>
 
                                                     <div className="dash-stat">
-                                                        <div className="dash-statValue">{statsLoading ? "—" : stats.experience}</div>
-                                                        <div className="dash-statLabel">Experience</div>
+                                                        <div className="dash-statValue">{statsLoading ? "—" : stats.experiences}</div>
+                                                        <div className="dash-statLabel">Experiences</div>
                                                     </div>
 
                                                     <div className="dash-stat">
@@ -432,7 +450,6 @@ export default function Dashboard() {
                                         </Container>
 
 
-
                                         {/* MAIN GRID */}
                                         <Grid
                                             gridDefinition={[
@@ -447,9 +464,7 @@ export default function Dashboard() {
                                                 header={
                                                     <Header
                                                         actions={
-                                                            <Button onClick={() => navigate("/profile?tab=projects")}>
-                                                                Manage
-                                                            </Button>
+                                                            <Button onClick={() => navigate("/profile/manage?type=project")}>Manage</Button>
                                                         }
                                                     >
                                                         Projects
@@ -460,26 +475,24 @@ export default function Dashboard() {
                                                     <Box color="text-body-secondary">
                                                         Pin your best projects so recruiters see them first.
                                                     </Box>
-
                                                     <div className="dash-list">
-                                                        {projects.map((p) => (
-                                                            <div key={p.id} className="dash-rowItem">
-                                                                <div>
-                                                                    <Box fontWeight="bold">
-                                                                        {p.name}
-                                                                    </Box>
-                                                                    <Box color="text-body-secondary">
-                                                                        {p.stack}
-                                                                    </Box>
+                                                        {entriesLoading ? (
+                                                            <Box color="text-body-secondary">Loading projects...</Box>
+                                                        ) : projects.length === 0 ? (
+                                                            <Box color="text-body-secondary">No projects yet.</Box>
+                                                        ) : (
+                                                            projects.slice(0, 3).map((p) => (
+                                                                <div key={p.id} className="dash-rowItem">
+                                                                    <div>
+                                                                        <Box fontWeight="bold">{p.title}</Box>
+                                                                        <Box color="text-body-secondary">{p.organization || "Project"}</Box>
+                                                                    </div>
+                                                                    {p.url ? <Badge>{safeHost(p.url) || "Link"}</Badge> : null}
                                                                 </div>
-                                                                <Badge color="green">
-                                                                    {p.status}
-                                                                </Badge>
-                                                            </div>
-                                                        ))}
+                                                            ))
+                                                        )}
                                                     </div>
-
-                                                    <Button iconName="add-plus" onClick={() => navigate("/profile?tab=projects")}>
+                                                    <Button iconName="add-plus" onClick={() => navigate("/profile/manage?type=project&add=1")}>
                                                         Add project
                                                     </Button>
                                                 </SpaceBetween>
@@ -490,9 +503,7 @@ export default function Dashboard() {
                                                 header={
                                                     <Header
                                                         actions={
-                                                            <Button onClick={() => navigate("/profile?tab=experience")}>
-                                                                Manage
-                                                            </Button>
+                                                            <Button onClick={() => navigate("/profile/manage?type=job")}>Manage</Button>
                                                         }
                                                     >
                                                         Experience
@@ -504,23 +515,28 @@ export default function Dashboard() {
                                                         Internships, roles, research, leadership, or
                                                         key coursework.
                                                     </Box>
-
                                                     <div className="dash-list">
-                                                        {experience.map((e) => (
-                                                            <div key={e.id} className="dash-rowItem">
-                                                                <div>
-                                                                    <Box fontWeight="bold">
-                                                                        {e.role}
-                                                                    </Box>
-                                                                    <Box color="text-body-secondary">
-                                                                        {e.org} • {e.dates}
-                                                                    </Box>
+                                                        {entriesLoading ? (
+                                                            <Box color="text-body-secondary">Loading experience...</Box>
+                                                        ) : experiences.length === 0 ? (
+                                                            <Box color="text-body-secondary">No experience yet.</Box>
+                                                        ) : (
+                                                            experiences.slice(0, 3).map((e) => (
+                                                                <div key={e.id} className="dash-rowItem">
+                                                                    <div>
+                                                                        <Box fontWeight="bold">{e.title}</Box>
+                                                                        <Box color="text-body-secondary">
+                                                                            {e.organization || ""}
+                                                                            {e.start_date
+                                                                                ? ` • ${e.start_date}${e.is_current ? " – Present" : e.end_date ? ` – ${e.end_date}` : ""}`
+                                                                                : ""}
+                                                                        </Box>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            ))
+                                                        )}
                                                     </div>
-
-                                                    <Button iconName="add-plus" onClick={() => navigate("/profile?tab=experience")}>
+                                                    <Button iconName="add-plus" onClick={() => navigate("/profile/manage?type=job&add=1")}>
                                                         Add experience
                                                     </Button>
                                                 </SpaceBetween>
@@ -531,9 +547,7 @@ export default function Dashboard() {
                                                 header={
                                                     <Header
                                                         actions={
-                                                            <Button onClick={() => navigate("/profile?tab=affiliations")}>
-                                                                Manage
-                                                            </Button>
+                                                            <Button onClick={() => navigate("/profile/manage?type=affiliation")}>Manage</Button>
                                                         }
                                                     >
                                                         Affiliations
@@ -547,14 +561,21 @@ export default function Dashboard() {
                                                     </Box>
 
                                                     <div className="dash-list">
-                                                        {affiliations.map((a) => (
-                                                            <div key={a.id} className="dash-rowItem">
-                                                                <Box fontWeight="bold">
-                                                                    • {a.name}
-                                                                </Box>
-                                                            </div>
-                                                        ))}
+                                                        {entriesLoading ? (
+                                                            <Box color="text-body-secondary">Loading affiliations...</Box>
+                                                        ) : affiliations.length === 0 ? (
+                                                            <Box color="text-body-secondary">No affiliations yet.</Box>
+                                                        ) : (
+                                                            affiliations.slice(0, 5).map((a) => (
+                                                                <div key={a.id} className="dash-rowItem">
+                                                                    <Box fontWeight="bold">• {a.title}</Box>
+                                                                </div>
+                                                            ))
+                                                        )}
                                                     </div>
+                                                    <Button iconName="add-plus" onClick={() => navigate("/profile/manage?type=affiliation&add=1")}>
+                                                        Add affiliation
+                                                    </Button>
                                                 </SpaceBetween>
                                             </Container>
 
@@ -563,9 +584,7 @@ export default function Dashboard() {
                                                 header={
                                                     <Header
                                                         actions={
-                                                            <Button onClick={() => navigate("/profile?tab=skills")}>
-                                                                Manage
-                                                            </Button>
+                                                            <Button onClick={() => { setSkillsOpen(true); loadSkills(); }}> Manage </Button>
                                                         }
                                                     >
                                                         Skills
@@ -579,11 +598,17 @@ export default function Dashboard() {
                                                             label: "Hard skills",
                                                             content: (
                                                                 <div className="dash-pillWrap">
-                                                                    {skills.hard.map((s) => (
-                                                                        <span key={s} className="dash-pill">
-                                                                            {s}
-                                                                        </span>
-                                                                    ))}
+                                                                    {skillsLoading ? (
+                                                                        <Box color="text-body-secondary">Loading...</Box>
+                                                                    ) : hardUserSkills.length === 0 ? (
+                                                                        <Box color="text-body-secondary">No hard skills yet.</Box>
+                                                                    ) : (
+                                                                        hardUserSkills.map((s) => (
+                                                                            <span key={s.id} className="dash-pill">
+                                                                                {s.name}
+                                                                            </span>
+                                                                        ))
+                                                                    )}
                                                                 </div>
                                                             ),
                                                         },
@@ -592,11 +617,17 @@ export default function Dashboard() {
                                                             label: "Soft skills",
                                                             content: (
                                                                 <div className="dash-pillWrap">
-                                                                    {skills.soft.map((s) => (
-                                                                        <span key={s} className="dash-pill">
-                                                                            {s}
-                                                                        </span>
-                                                                    ))}
+                                                                    {skillsLoading ? (
+                                                                        <Box color="text-body-secondary">Loading...</Box>
+                                                                    ) : softUserSkills.length === 0 ? (
+                                                                        <Box color="text-body-secondary">No soft skills yet.</Box>
+                                                                    ) : (
+                                                                        softUserSkills.map((s) => (
+                                                                            <span key={s.id} className="dash-pill">
+                                                                                {s.name}
+                                                                            </span>
+                                                                        ))
+                                                                    )}
                                                                 </div>
                                                             ),
                                                         },
@@ -615,7 +646,7 @@ export default function Dashboard() {
                                                     <SpaceBetween direction="horizontal" size="xs">
                                                         <Button variant="primary" onClick={async () => {
                                                                 try {
-                                                                    const res = await fetch("/api/actions/profile", {
+                                                                    const res = await fetch("/api/profile", {
                                                                         method: "PUT",
                                                                         credentials: "include",
                                                                         headers: { "Content-Type": "application/json" },
@@ -706,17 +737,6 @@ export default function Dashboard() {
                                                             placeholder="e.g., USA"
                                                         />
                                                     </FormField>
-                                                    {/* <FormField label="Location">
-                                                        <Input
-                                                            value={profile.location}
-                                                            onChange={(e) =>
-                                                                setProfile((p) => ({
-                                                                    ...p,
-                                                                    location: e.detail.value,
-                                                                }))
-                                                            }
-                                                        />
-                                                    </FormField> */}
 
                                                     <FormField label="Bio">
                                                         <Textarea
@@ -732,6 +752,83 @@ export default function Dashboard() {
                                                     </FormField>
                                                 </SpaceBetween>
                                             </Form>
+                                        </Modal>
+
+                                        <Modal
+                                            visible={skillsOpen}
+                                            onDismiss={() => setSkillsOpen(false)}
+                                            header="Edit skills"
+                                            footer={
+                                                <Box float="right">
+                                                    <SpaceBetween direction="horizontal" size="xs">
+                                                        <Button variant="link" onClick={() => setSkillsOpen(false)}> Close </Button>
+                                                    </SpaceBetween>
+                                                </Box>
+                                            }
+                                        >
+                                            <SpaceBetween size="l">
+                                                <Box color="text-body-secondary">
+                                                    Pick from the dropdown, then click Add.
+                                                </Box>
+
+                                                <Container header={<Header variant="h2">Hard skills</Header>}>
+                                                    <SpaceBetween size="s">
+                                                        <Select
+                                                            statusType={skillsLoading ? "loading" : "finished"}
+                                                            placeholder="Select a hard skill"
+                                                            selectedOption={selectedHard}
+                                                            options={hardCatalog.map((s) => ({
+                                                                label: s.name,
+                                                                value: String(s.id),
+                                                            }))}
+                                                            onChange={({ detail }) => setSelectedHard(detail.selectedOption)}
+                                                        />
+                                                        <Button variant="primary" disabled={!selectedHard?.value} onClick={() => addSkill("hard")}> Add </Button>
+
+                                                        <div className="dash-pillWrap">
+                                                            {hardUserSkills.length === 0 ? (
+                                                                <Box color="text-body-secondary">No hard skills yet.</Box>
+                                                            ) : (
+                                                                hardUserSkills.map((s) => (
+                                                                    <span key={s.id} className="dash-pill" style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+                                                                        {s.name}
+                                                                        <Button variant="icon" iconName="close" onClick={() => removeSkill(s.id)}/>
+                                                                    </span>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </SpaceBetween>
+                                                </Container>
+
+                                                <Container header={<Header variant="h2">Soft skills</Header>}>
+                                                    <SpaceBetween size="s">
+                                                        <Select
+                                                            statusType={skillsLoading ? "loading" : "finished"}
+                                                            placeholder="Select a soft skill"
+                                                            selectedOption={selectedSoft}
+                                                            options={softCatalog.map((s) => ({
+                                                                label: s.name,
+                                                                value: String(s.id),
+                                                            }))}
+                                                            onChange={({ detail }) => setSelectedSoft(detail.selectedOption)}
+                                                        />
+                                                        <Button variant="primary" disabled={!selectedSoft?.value} onClick={() => addSkill("soft")}> Add </Button>
+
+                                                        <div className="dash-pillWrap">
+                                                            {softUserSkills.length === 0 ? (
+                                                                <Box color="text-body-secondary">No soft skills yet.</Box>
+                                                            ) : (
+                                                                softUserSkills.map((s) => (
+                                                                    <span key={s.id} className="dash-pill" style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+                                                                        {s.name}
+                                                                        <Button variant="icon" iconName="close" onClick={() => removeSkill(s.id)} />
+                                                                    </span>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </SpaceBetween>
+                                                </Container>
+                                            </SpaceBetween>
                                         </Modal>
                                     </SpaceBetween>
                                 </ContentLayout>

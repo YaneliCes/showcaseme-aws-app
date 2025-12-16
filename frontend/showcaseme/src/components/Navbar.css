@@ -120,14 +120,24 @@
 
 .user-icon {
     font-size: 1.2rem;
-    color: #e5e7eb;
+    color: #ffffff;
 }
 
 .user-name {
     font-size: 0.95rem;
-    color: #e5e7eb;
+    color: #ffffff;
     font-weight: 500;
 }
+
+.user-name a,
+.user-name a:link,
+.user-name a:visited,
+.user-name a:hover,
+.user-name a:active {
+    text-decoration: none;
+    color: #ffffff;
+}
+
 
 /* Logout button */
 .logout-btn {
