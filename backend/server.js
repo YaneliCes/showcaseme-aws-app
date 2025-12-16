@@ -3,7 +3,11 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const session = require("express-session");
 const authRouter = require("./routes/auth");
-const actionsRouter = require("./routes/actions");
+const profileRouter = require("./routes/profile");
+const entriesRouter = require("./routes/entries");
+const skillsRouter = require("./routes/skills");
+const feedRouter = require("./routes/feed");
+const publicPortfolioRouter = require("./routes/publicPortfolio");
 
 dotenv.config();
 
@@ -47,8 +51,19 @@ app.use(
 // Auth routes (register, login, logout, session))
 app.use("/api", authRouter);
 
-// Auth routes (edit profile, projects, experience, etc.)
-app.use("/api/actions", actionsRouter);
+// Profile routes (edit profile, projects, experience, etc.)
+app.use("/api/profile", profileRouter);
+
+// Entry routes (edit portoflio - projects, experience, affiliations)
+app.use("/api/profile/entries", entriesRouter);
+
+// Skills route (hard and soft skills)
+app.use("/api/profile/skills", skillsRouter);
+
+// Feed route (grab public users)
+app.use("/api/feed", feedRouter);
+app.use("/api/public/portfolio", publicPortfolioRouter);
+
 
 // Health check
 app.get("/healthz", (req, res) => res.send("OK"));

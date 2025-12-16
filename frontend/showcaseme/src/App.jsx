@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { applyMode, Mode } from "@cloudscape-design/global-styles";
 import './App.css';
 import { Link, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider } from './components/UserContext';
+import ScrollToTop from "./components/ScrollToTop";
 import Navbar from './components/Navbar';
 import Header from './components/Header';
 import Footer from "./components/Footer";
@@ -9,9 +11,9 @@ import Explore from './pages/Explore';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-// import Plans from './pages/Plans';
-// import FindPlaces from './pages/FindPlaces';
-// import Ratings from './pages/Ratings';
+import PortfolioManager from './pages/PortfolioManager';
+import Portfolio from "./pages/Portfolio";
+import Feed from "./pages/Feed";
 
 import { usePageTracking } from "./hooks/usePageTracking";
 
@@ -19,20 +21,32 @@ function App() {
   // log a page_view on every route change
   usePageTracking();
   
+    const [colorMode, setColorMode] = useState(() => {
+        const saved = localStorage.getItem("cs-color-mode");
+        return saved === "dark" ? "dark" : "light";
+    });
+
+    useEffect(() => {
+        applyMode(colorMode === "dark" ? Mode.Dark : Mode.Light);
+        localStorage.setItem("cs-color-mode", colorMode);
+    }, [colorMode]);
+
   return (
   <UserProvider>
     <div> 
+        <ScrollToTop />
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path='explore' element={<Explore />} />
-          <Route path='register' element={<Register />} />
-          <Route path='login' element={<Login />} />
-          <Route path='dashboard' element={<Dashboard />} />
-          {/* <Route path='plans' element={<Plans />} />
-          <Route path='findplaces' element={<FindPlaces />} />
-          <Route path='ratings' element={<Ratings />} /> */}
-          <Route path='navbar' element={<Navbar />} />
-          <Route path='header' element={<Header />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path='explore' element={<Explore />} />
+            <Route path='register' element={<Register />} />
+            <Route path='login' element={<Login />} />
+            <Route path='dashboard' element={<Dashboard />} />
+            <Route path="profile/manage" element={<PortfolioManager />} />
+            <Route path='navbar' element={<Navbar />} />
+            <Route path='header' element={<Header />} />
+            <Route path="portfolio" element={<Portfolio />} />
+            <Route path="portfolio/:username" element={<Portfolio />} />
+            <Route path="feed" element={<Feed />} />
         </Routes>
         <Footer />
     </div>

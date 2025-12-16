@@ -1,0 +1,75 @@
+.profile-page {
+    padding: 16px;
+}
+
+.profile-loading {
+    padding: 24px;
+}
+
+.profile-headerCard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-headerLeft {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.profile-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    color: #ffffff;
+    background: #4a90e2;
+}
+
+.profile-identity {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-itemRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-itemRow:last-child {
+    border-bottom: none;
+}
+
+.profile-itemText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-bulletRow {
+    padding: 6px 0;
+}
+
+.profile-pillWrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 8px;
+}
+
+.profile-pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    font-weight: 600;
+    font-size: 13px;
+}
