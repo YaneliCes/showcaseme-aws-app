@@ -1,0 +1,12 @@
+/* ─────────────────────────────────────────────
+   PAGE WRAPPER
+───────────────────────────────────────────── */
+.app-under-navbar {
+    padding-top: var(--navbar-height);
+}
+
+.entries-page {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 16px;
+}

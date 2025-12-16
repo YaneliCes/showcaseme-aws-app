@@ -91,7 +91,7 @@ const Navbar = () => {
       <div className="navbar-right">
         <div className="user-chip">
             <FaUserCircle className="user-icon" />
-            <span className="user-name">{username}</span>
+            <span className="user-name"> <Link to="/portfolio"> {username} </Link> </span>
         </div>
 
         <button className="logout-btn" type="button" onClick={handleLogout}>

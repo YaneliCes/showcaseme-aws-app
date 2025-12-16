@@ -1,0 +1,88 @@
+.feed-page {
+    padding: 16px;
+}
+
+.feed-card .awsui_container_1wepy_1 {
+    cursor: pointer;
+}
+
+.feed-cardClickable {
+    outline: none;
+}
+
+.feed-top {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.feed-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.feed-identity {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.feed-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.feed-tag {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.feed-tagLabel {
+    opacity: 0.8;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.feed-tagValue {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.feed-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.feed-stat {
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.10);
+    text-align: center;
+}
+
+.feed-statValue {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.feed-statLabel {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-top: 4px;
+}

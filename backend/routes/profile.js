@@ -4,13 +4,11 @@ const { logActivity } = require("../utils/activityLogger");
 const requireAuth = require("../utils/requireAuth");
 
 const router = express.Router();
-
-// Protect everything in this router
 router.use(requireAuth);
 
-// GET /api/actions/profile
+// GET /api/profile
 // Returns user + profile + industry
-router.get("/profile", async (req, res) => {
+router.get("/", async (req, res) => {
     const userId = req.session.user.id;
     const conn = await getConnection();
 
@@ -20,7 +18,7 @@ router.get("/profile", async (req, res) => {
             [userId]
         );
 
-        const rows = await conn.query(
+        const rows = await conn.query (
             `SELECT
                 u.id, u.username, u.email, u.first_name, u.last_name, u.created,
                 p.bio, p.profile_image_url, p.resume_url, p.privacy, p.tier, p.updated,
@@ -49,9 +47,9 @@ router.get("/profile", async (req, res) => {
     }
 });
 
-//PUT /api/actions/profile
+// PUT /api/profile
 // Updates user profile
-router.put("/profile", async (req, res) => {
+router.put("/", async (req, res) => {
     const userId = req.session.user.id;
 
     const {
@@ -93,7 +91,7 @@ router.put("/profile", async (req, res) => {
 
         // Check if industry exists if provided
         if (industryIdClean !== null) {
-            const industryRows = await conn.query(
+            const industryRows = await conn.query (
                 `SELECT id FROM Industries WHERE id = ? LIMIT 1`,
                 [industryIdClean]
             );
@@ -105,7 +103,7 @@ router.put("/profile", async (req, res) => {
             }
         }
 
-        await conn.query(
+        await conn.query (
             `UPDATE UserProfiles
             SET bio = ?, profile_image_url = ?, resume_url = ?, privacy = ?, industry_id = ?, title = ?, city = ?, state = ?, country = ?
             WHERE user_id = ?`,
@@ -114,7 +112,7 @@ router.put("/profile", async (req, res) => {
 
         await logActivity(req, {
             eventType: "profile_update",
-            route: "/api/actions/profile",
+            route: "/api/profile",
             metadata: {
                 userId,
                 privacy,
@@ -134,50 +132,54 @@ router.put("/profile", async (req, res) => {
     }
 });
 
-// GET /api/actions/industries
+// GET /api/profile/industries
 router.get("/industries", async (req, res) => {
     const conn = await getConnection();
     try {
-        const rows = await conn.query(
+        const rows = await conn.query (
             `SELECT id, name FROM Industries ORDER BY name ASC`
         );
-        return res.json({ status: "success", industries: rows });
+        return res.json({ 
+            status: "success", 
+            industries: rows });
     } catch (err) {
         console.error("GET /industries error:", err);
-        return res.status(500).json({ status: "error" });
+        return res.status(500).json({ 
+            status: "error" 
+        });
     } finally {
         conn.release();
     }
 });
 
-// GET /api/actions/stats
+// GET /api/profile/stats
 router.get("/stats", async (req, res) => {
     const userId = req.session.user.id;
     const conn = await getConnection();
 
     try {
-        const [projectsRow] = await conn.query(
+        const [projectsRow] = await conn.query (
             `SELECT COUNT(*) AS c
             FROM PortfolioEntries
             WHERE user_id = ? AND type = 'project'`,
             [userId]
         );
 
-        const [experienceRow] = await conn.query(
+        const [experienceRow] = await conn.query (
             `SELECT COUNT(*) AS c
             FROM PortfolioEntries
             WHERE user_id = ? AND type = 'job'`,
             [userId]
         );
 
-        const [affiliationsRow] = await conn.query(
+        const [affiliationsRow] = await conn.query (
             `SELECT COUNT(*) AS c
             FROM PortfolioEntries
             WHERE user_id = ? AND type = 'affiliation'`,
             [userId]
         );
 
-        const [hardSkillsRow] = await conn.query(
+        const [hardSkillsRow] = await conn.query (
             `SELECT COUNT(*) AS c
             FROM UserSkills us
             JOIN Skills s ON s.id = us.skill_id
@@ -185,7 +187,7 @@ router.get("/stats", async (req, res) => {
             [userId]
         );
 
-        const [softSkillsRow] = await conn.query(
+        const [softSkillsRow] = await conn.query (
             `SELECT COUNT(*) AS c
             FROM UserSkills us
             JOIN Skills s ON s.id = us.skill_id
@@ -193,7 +195,7 @@ router.get("/stats", async (req, res) => {
             [userId]
         );
 
-        const [favsRow] = await conn.query(
+        const [favsRow] = await conn.query (
             `SELECT COUNT(*) AS c
             FROM UserFavorites
             WHERE user_id = ?`,
@@ -201,7 +203,7 @@ router.get("/stats", async (req, res) => {
         );
 
         // today's views
-        const [viewsRow] = await conn.query(
+        const [viewsRow] = await conn.query (
             `SELECT view_count
             FROM ProfileViewDaily
             WHERE user_id = ? AND date = CURDATE()
@@ -213,7 +215,7 @@ router.get("/stats", async (req, res) => {
             status: "success",
             stats: {
                 projects: Number(projectsRow?.c || 0),
-                experience: Number(experienceRow?.c || 0),
+                experiences: Number(experienceRow?.c || 0),
                 affiliations: Number(affiliationsRow?.c || 0),
                 hardSkills: Number(hardSkillsRow?.c || 0),
                 softSkills: Number(softSkillsRow?.c || 0),
