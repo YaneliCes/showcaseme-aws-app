@@ -57,9 +57,24 @@
     flex-wrap: wrap;
 }
 
-.profile-bio {
+.profile-text {
     padding-left: 72px;
 }
+
+/* profile link */
+.profile-page [class^="awsui_link"],
+.profile-page [class*=" awsui_link"] {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+/* also hit the actual <a> tag inside it */
+.profile-page [class^="awsui_link"] a,
+.profile-page [class*=" awsui_link"] a {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
 
 .profile-stats {
     display: flex;

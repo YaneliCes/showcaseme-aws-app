@@ -24,6 +24,7 @@ export default function Portfolio() {
         industryName: "",
         privacy: "public",
         tier: "free",
+        resume_url: "",
         title: "",
         city: "",
         state: "",
@@ -56,12 +57,17 @@ export default function Portfolio() {
         }
     };
 
+    const toAbsoluteUrl = (u) => {
+        if (!u) return "";
+        if (u.startsWith("http://") || u.startsWith("https://")) return u;
+        return `${window.location.origin}${u}`;
+    };
+
     const renderDetails = (details) => {
         const raw = String(details || "").trim();
         if (!raw) return null;
 
-        // Split into lines, and treat lines that start with "-", "•", "*"
-        // as bullet items. If there are multiple lines, show a list.
+        // Split into lines, and treat lines that start with "-", "•", "*" as bullet items. If there are multiple lines, show a list.
         const lines = raw
             .split(/\r?\n/)
             .map((l) => l.trim())
@@ -92,17 +98,17 @@ export default function Portfolio() {
         );
     };
 
-    const location = useMemo(() => {
-        return [profile.city, profile.state, profile.country]
-            .filter(Boolean)
-            .join(", ");
-    }, [profile.city, profile.state, profile.country]);
-
     const avatarLetter = useMemo(() => {
         const u = profile.username || "U";
         return u[0]?.toUpperCase() || "?";
     }, [profile.username]);
 
+    const location = useMemo(() => {
+        return [profile.city, profile.state, profile.country]
+            .filter(Boolean)
+            .join(", ");
+    }, [profile.city, profile.state, profile.country]);
+    
     const goBackToFeed = () => {
         if (window.history.length > 1) {
             navigate(-1);
@@ -164,7 +170,7 @@ export default function Portfolio() {
 
         try {
 
-            // 1) REQUIRED: check session
+            // 1) Check session
             const sessionRes = await fetch("/api/session", {
                 credentials: "include"
             });
@@ -216,6 +222,7 @@ export default function Portfolio() {
                 industryName: p.industry_name || "",
                 privacy: p.privacy || "public",
                 tier: p.tier || "free",
+                resume_url: p.resume_url || "",
                 title: p.title || "",
                 city: p.city || "",
                 state: p.state || "",
@@ -327,10 +334,13 @@ export default function Portfolio() {
                                         <Container>
                                             <div className="profile-headerCard">
                                                 <div className="profile-headerLeft">
+
+                                                     {/* PROFILE */}
                                                     <div className="profile-avatar">
                                                         {avatarLetter}
                                                     </div>
 
+                                                     {/* PROFILE INDUSTRY - LOCATION */}
                                                     <div className="profile-identity">
                                                         <Box
                                                             fontWeight="bold"
@@ -350,7 +360,8 @@ export default function Portfolio() {
                                                                 : "Industry not set"}
                                                             {location ? ` • ${location}` : ""}
                                                         </Box>
-
+                                                        
+                                                         {/* PROFILE PRIVACY */}
                                                         <Box margin={{ top: "xs" }}>
                                                             <StatusIndicator
                                                                 type={
@@ -363,41 +374,7 @@ export default function Portfolio() {
                                                             </StatusIndicator>
                                                         </Box>
 
-                                                        {/* <Box margin={{ top: "s" }}>
-                                                            <SpaceBetween direction="horizontal" size="m">
-                                                                <Box>
-                                                                    <Box fontWeight="bold">{followMeta.counts.followers}</Box>
-                                                                    <Box color="text-body-secondary" fontSize="body-s">Followers</Box>
-                                                                </Box>
-
-                                                                <Box>
-                                                                    <Box fontWeight="bold">{followMeta.counts.following}</Box>
-                                                                    <Box color="text-body-secondary" fontSize="body-s">Following</Box>
-                                                                </Box>
-
-                                                                {!isSelf ? (
-                                                                    <div className="profile-followRow">
-                                                                        <Button
-                                                                            variant={followMeta.following ? "normal" : "primary"}
-                                                                            loading={followLoading}
-                                                                            onClick={handleFollowToggle}
-                                                                        >
-                                                                            {followMeta.following ? "Following" : "Follow"}
-                                                                        </Button>
-
-                                                                        {followMeta.connection ? (
-                                                                            <div className="profile-followStatus">
-                                                                                <StatusIndicator type="success">Connected</StatusIndicator>
-                                                                            </div>
-                                                                        ) : followMeta.followedBy ? (
-                                                                            <div className="profile-followStatus">
-                                                                                <StatusIndicator type="info">Follows you</StatusIndicator>
-                                                                            </div>
-                                                                        ) : null}
-                                                                    </div>
-                                                                ) : null}
-                                                            </SpaceBetween>
-                                                        </Box> */}
+                                                         {/* PROFILE FOLLOWING/FOLLOWER */}
                                                         <div className="profile-metaRow">
                                                             <div className="profile-stats">
                                                                 <div className="profile-statPill">
@@ -427,15 +404,35 @@ export default function Portfolio() {
                                                                 </div>
                                                             ) : null}
                                                         </div>
-
                                                     </div>
                                                 </div>
 
-                                                <div className="profile-bio">
+                                                {/* PROFILE BIO */}
+                                                <div className="profile-text">
                                                     <Box margin={{ top: "s" }} color="text-body-secondary">
                                                         Bio: {profile.bio?.trim()
                                                             ? profile.bio
                                                             : "This user hasn’t added a bio yet."}
+                                                    </Box>
+                                                </div>
+
+                                                 {/* PROFILE RESUME */}
+                                                <div className="profile-text">
+                                                    <Box margin={{ top: "s" }} color="text-body-secondary">
+                                                        {profile.resume_url ? (
+                                                            <>
+                                                                Resume:{" "}
+                                                                <Link
+                                                                    external
+                                                                    externalIconAriaLabel="Opens in a new tab"
+                                                                    href={toAbsoluteUrl(profile.resume_url)}
+                                                                >
+                                                                    View PDF
+                                                                </Link>
+                                                            </>
+                                                        ) : (
+                                                            "Resume: This user hasn’t uploaded a resume yet."
+                                                        )}
                                                     </Box>
                                                 </div>
                                             </div>
@@ -487,7 +484,7 @@ export default function Portfolio() {
 
                                                                     {p.url && (
                                                                         <Badge>
-                                                                            <Link external href={p.url}>
+                                                                            <Link external href={p.url} variant="primary">
                                                                                 {safeHost(p.url) || "Link"}
                                                                             </Link>
                                                                         </Badge>
