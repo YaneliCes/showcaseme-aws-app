@@ -2,6 +2,13 @@
     padding: 16px;
 }
 
+/* keeps it looking like a “final” page */
+.profile-shell {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* loading */
 .profile-loading {
     padding: 24px;
 }
@@ -9,9 +16,11 @@
 .profile-headerCard {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    /* gap: 14px; */
+    gap: 0px;
 }
 
+/* top row */
 .profile-headerLeft {
     display: flex;
     gap: 14px;
@@ -19,46 +28,113 @@
 }
 
 .profile-avatar {
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
     border-radius: 999px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-    font-size: 18px;
+    font-weight: 900;
+    font-size: 20px;
     color: #ffffff;
     background: #4a90e2;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .profile-identity {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
-.profile-itemRow {
+/* stats + actions row */
+.profile-metaRow {
+    margin-top: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 14px;
+    flex-wrap: wrap;
 }
 
-.profile-itemRow:last-child {
-    border-bottom: none;
+.profile-bio {
+    padding-left: 72px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.profile-statPill {
+    border-radius: 14px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.06);
+    min-width: 100px;
+}
+
+.profile-statNum {
+    font-weight: 900;
+    font-size: 18px;
+    line-height: 1.1;
+}
+
+.profile-statLabel {
+    font-size: 12px;
+    opacity: 0.75;
+    margin-top: 2px;
+}
+
+.profile-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ENTRY LISTS */
+.profile-itemRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.04);
+    transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.profile-itemRow:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.16);
 }
 
 .profile-itemText {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
+/* preserve line breaks in details */
+.profile-detailsText {
+    white-space: pre-line;
+    line-height: 1.35;
+}
+
+/* affiliations */
 .profile-bulletRow {
-    padding: 6px 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.04);
 }
 
+/* pills */
 .profile-pillWrap {
     display: flex;
     flex-wrap: wrap;
@@ -67,21 +143,101 @@
 }
 
 .profile-pill {
-    padding: 6px 10px;
+    padding: 7px 10px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    font-weight: 600;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    font-weight: 700;
     font-size: 13px;
 }
 
-.profile-followRow {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* mobile polish */
+@media (max-width: 560px) {
+    .profile-headerLeft {
+        align-items: flex-start;
+    }
+
+    .profile-avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+
+    .profile-itemRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
-.profile-followStatus {
+.profile-itemTitleRow {
     display: flex;
-    align-items: center;
-    margin-top: 1px;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.profile-itemTitle {
+    font-weight: 800;
+    font-size: 1.3em;
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.profile-itemMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+    opacity: 0.9;
+}
+
+.profile-itemOrg {
+    font-weight: 600;
+    font-size: 1.1em;
+    opacity: 0.85;
+}
+
+.profile-itemDates {
+    font-size: 1.1em;
+    opacity: 0.75;
+}
+
+.profile-itemDates::before {
+    content: "•";
+    margin-right: 8px;
+    opacity: 0.6;
+}
+
+/* Details as bullets */
+.profile-detailsList {
+    margin: 8px 0 0 0;
+    padding-left: 18px;
+    opacity: 0.95;
+}
+
+.profile-detailsItem {
+    margin: 4px 0;
+    line-height: 1.35;
+    font-size: 1.05em;
+    opacity: 0.85;
+}
+
+/* Single line details looks like a bullet too */
+.profile-detailsOneLine {
+    margin-top: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    opacity: 0.9;
+}
+
+.profile-detailsDot {
+    opacity: 0.6;
+    line-height: 1.35;
+}
+
+.profile-detailsText {
+    line-height: 1.35;
+    font-size: 1.05em;
+    opacity: 0.85;
 }

@@ -4,6 +4,43 @@
     padding: 16px;
 }
 
+.network-page .network-tabsEmpty {
+    display: none;
+}
+
+.network-page [class*="awsui_tabs-content"],
+.network-page [class*="awsui_tabs_content"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 8px !important;
+}
+
+.dash-followCounts {
+    display: inline-flex;
+    gap: 30px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.dash-followPill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 0px;
+}
+
+.dash-followNum {
+    font-weight: 800;
+    font-size: 1.1em;
+}
+
+.dash-followLabel {
+    font-size: 1.1em;
+    opacity: 0.75;
+}
+
 .network-cardClickable {
     cursor: pointer;
     outline: none;
@@ -24,7 +61,7 @@
     justify-content: center;
     font-weight: 700;
     background: rgb(232, 231, 231);
-    border: 2px solid black;
+    border: 2px solid rgb(210, 209, 209);
 }
 
 body.awsui-dark-mode .network-avatar {
@@ -75,4 +112,53 @@ body.awsui-dark-mode .network-avatar {
 .network-statLabel {
     font-size: 12px;
     opacity: 0.7;
+}
+
+.network-page .awsui_grid_1wepy_1 {
+    align-items: stretch;
+}
+
+.network-page .awsui_grid_1wepy_1 > * {
+    flex: 0 0 auto !important;
+}
+
+.network-card {
+    width: 100%;
+}
+
+.network-card .awsui_container_1wepy_1 {
+    height: 100%;
+}
+
+.network-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    align-items: stretch;
+}
+
+.network-card {
+    width: 100%;
+}
+
+.network-card .awsui_container_1wepy_1 {
+    height: 100%;
+}
+
+.network-actionsRow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.network-unfollowBtn {
+    background: #c12727 !important;
+    border-color: #c12727 !important;
+    color: #ffffff !important;
+}
+
+.network-unfollowBtn:hover {
+    background: #9c1717 !important;
+    border-color: #9c1717 !important;
 }

@@ -48,3 +48,5 @@ Thumbs.db
 # Other
 docker-compose.*.yml
 vite.config copy.js
+backend/uploads/resumes/*
+!backend/uploads/resumes/.gitkeep
