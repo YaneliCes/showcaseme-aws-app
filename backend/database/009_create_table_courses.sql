@@ -3,5 +3,6 @@ CREATE TABLE IF NOT EXISTS `Courses` (
     `title` VARCHAR(200) NOT NULL,
     `provider` VARCHAR(100) NULL,
     `url` VARCHAR(255) NOT NULL,
-    `description` TEXT NULL
+    `description` TEXT NULL,
+    UNIQUE KEY `uq_courses_url` (`url`)
 );

@@ -8,3 +8,64 @@
   text-align: center;
   color: rgba(255,255,255,0.8);
 }
+
+/* ==============================
+   MFA Pop-up Modal
+================================ */
+.mfa-modal {
+    max-width: 640px;
+    padding-bottom: 6px;
+}
+
+.mfa-section {
+    padding: 18px 18px;
+    margin-top: 6px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Spacing between MFA steps */
+.mfa-section + .mfa-section {
+    margin-top: 14px;
+}
+
+/* Status message */
+.mfa-status {
+    margin-bottom: 2px;
+}
+
+/* Empty/loading state spacing */
+.mfa-empty {
+    padding: 16px 4px 10px;
+}
+
+/* QR area spacing */
+.mfa-qr-wrap {
+    display: flex;
+    justify-content: center;
+    padding-top: 14px;
+    padding-bottom: 6px;
+}
+
+/* Secret code row spacing */
+.mfa-secret-section {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.mfa-secret-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.mfa-helper {
+    margin-top: 8px;
+}
+
+.awsui-modal-footer {
+    padding-top: 12px;
+}
