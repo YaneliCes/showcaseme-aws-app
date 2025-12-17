@@ -163,6 +163,30 @@
     box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
 }
 
+.theme-btn {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: #e8ecf7;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.theme-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* If you want it to look more "light mode friendly" when not dark */
+body:not(.awsui-dark-mode) .theme-btn {
+    border-color: rgba(0, 0, 0, 0.18);
+    background: rgb(240, 240, 240);
+    color: #111827;
+}
+
 /* ─────────────────────────────────────────────
    RESPONSIVE
 ─────────────────────────────────────────────── */
@@ -192,4 +216,71 @@
     .user-name {
         display: none;
     }
+}
+
+/* ─────────────────────────────────────────────
+   USER DROPDOWN
+─────────────────────────────────────────────── */
+
+.user-menu {
+    position: relative;
+}
+
+.user-chip-btn {
+    border: none;
+    cursor: pointer;
+}
+
+.user-chip-btn:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.7);
+    outline-offset: 2px;
+}
+
+.user-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    min-width: 180px;
+    padding: 8px;
+    border-radius: 14px;
+
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(18px);
+
+    z-index: 2000;
+}
+
+.user-dropdown-item {
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    color: #e2e8f0;
+    font-weight: 600;
+    padding: 10px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.user-dropdown-item:hover {
+    background: rgba(59, 130, 246, 0.16);
+    color: #ffffff;
+}
+
+.user-dropdown-divider {
+    height: 1px;
+    margin: 8px 6px;
+    background: rgba(148, 163, 184, 0.25);
+}
+
+.user-dropdown-item.danger {
+    color: #fecaca;
+}
+
+.user-dropdown-item.danger:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #ffffff;
 }

@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Navbar from "../components/Navbar";
-import "./Feed.css";
-import {
-    AppLayout, ContentLayout, Header, Box, SpaceBetween,
-    Container, Input, Grid, StatusIndicator, Button
-} from "@cloudscape-design/components";
 import { useNavigate } from "react-router-dom";
 import { applyMode, Mode } from "@cloudscape-design/global-styles";
+import {
+    AppLayout, ContentLayout, Header, Box, SpaceBetween,
+    Container, Input, Grid, StatusIndicator, Button,
+} from "@cloudscape-design/components";
+import Navbar from "../components/Navbar";
+import "./Feed.css";
 
 export default function Feed() {
     const navigate = useNavigate();
@@ -15,8 +15,17 @@ export default function Feed() {
     const [loading, setLoading] = useState(true);
     const [users, setUsers] = useState([]);
 
+    const [followBusy, setFollowBusy] = useState({});
+
+    const safeText = (text) => (String(text || "").trim() ? String(text) : "");
+
+    const makeLocation = (u) => [u.city, u.state, u.country].filter(Boolean).join(", ");
+
+    const avatarLetter = (username) => (username?.[0]?.toUpperCase() || "?");
+
     const load = async (query) => {
         setLoading(true);
+
         try {
             const url = query ? `/api/feed?q=${encodeURIComponent(query)}` : "/api/feed";
             const res = await fetch(url, { credentials: "include" });
@@ -36,6 +45,28 @@ export default function Feed() {
         }
     };
 
+    const toggleFollow = async (username, isFollowing) => {
+        if (!username) return;
+
+        setFollowBusy((m) => ({ ...m, [username]: true }));
+
+        try {
+            const res = await fetch(`/api/follow/${encodeURIComponent(username)}`, {
+                method: isFollowing ? "DELETE" : "POST",
+                credentials: "include",
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") return;
+
+            await load(q);
+        } catch (e) {
+            console.error("toggleFollow error:", e);
+        } finally {
+            setFollowBusy((m) => ({ ...m, [username]: false }));
+        }
+    };
+
     useEffect(() => {
         // Apply saved theme (keeps dark mode consistent across pages)
         const saved = localStorage.getItem("cs-color-mode");
@@ -51,7 +82,6 @@ export default function Feed() {
                 });
 
                 const sessionJson = await sessionRes.json().catch(() => ({}));
-
                 if (!sessionRes.ok || sessionJson.status !== "success") {
                     navigate("/login");
                     return;
@@ -69,14 +99,6 @@ export default function Feed() {
 
     const filtered = useMemo(() => users, [users]);
 
-    const safeText = (text) => (String(text || "").trim() ? String(text) : "");
-
-    const makeLocation = (u) => {
-        return [u.city, u.state, u.country].filter(Boolean).join(", ");
-    };
-
-    const avatarLetter = (username) => (username?.[0]?.toUpperCase() || "?");
-
     return (
         <>
             <Navbar />
@@ -88,7 +110,7 @@ export default function Feed() {
                         <div className="feed-page">
                             <ContentLayout
                                 header={
-                                    <Header variant="h1" description="Explore public portfolios. Click one to view the full page.">
+                                    <Header variant="h1" description="Explore portfolios. Public profiles show full previews. Private profiles require mutual connection to view.">
                                         Portfolio Feed
                                     </Header>
                                 }
@@ -106,12 +128,15 @@ export default function Feed() {
                                                 }}
                                             />
                                             <SpaceBetween direction="horizontal" size="s">
-                                                <Button onClick={() => load(q)} loading={loading}> Search </Button>
+                                                <Button onClick={() => load(q)} loading={loading}>
+                                                    Search
+                                                </Button>
                                                 <Button
                                                     variant="link"
                                                     onClick={() => {
                                                         setQ("");
-                                                        load(""); }}
+                                                        load("");
+                                                    }}
                                                 >
                                                     Clear
                                                 </Button>
@@ -122,7 +147,7 @@ export default function Feed() {
                                     {loading ? (
                                         <Box color="text-body-secondary">Loading feed...</Box>
                                     ) : filtered.length === 0 ? (
-                                        <Box color="text-body-secondary">No public portfolios found.</Box>
+                                        <Box color="text-body-secondary">No portfolios found.</Box>
                                     ) : (
                                         <Grid
                                             gridDefinition={[
@@ -137,21 +162,30 @@ export default function Feed() {
                                                 const title = safeText(u.title) || "—";
                                                 const bio = safeText(u.bio) || "—";
 
+                                                const isPrivate = u.privacy === "private";
+
+                                                // Always show full preview for public profiles
+                                                // Private profiles only show full preview if backend says you can view (e.g., mutual connection)
+                                                const canView = (u.privacy === "public") || !!u.canViewPortfolio;
+
+                                                const isFollowing = !!u.following;
+                                                const isConnected = !!u.connection;
+                                                const followedBy = !!u.followedBy;
+
+                                                const goToPortfolio = () => {
+                                                    if (!canView) return;
+                                                    navigate(`/portfolio/${encodeURIComponent(u.username)}`);
+                                                };
+
                                                 return (
                                                     <Container key={u.user_id} className="feed-card">
                                                         <div
                                                             className="feed-cardClickable"
                                                             role="button"
                                                             tabIndex={0}
-                                                            onClick={() =>
-                                                                navigate(`/portfolio/${encodeURIComponent(u.username)}`)
-                                                            }
+                                                            onClick={goToPortfolio}
                                                             onKeyDown={(e) => {
-                                                                if (e.key === "Enter") {
-                                                                    navigate(
-                                                                        `/portfolio/${encodeURIComponent(u.username)}`
-                                                                    );
-                                                                }
+                                                                if (e.key === "Enter") goToPortfolio();
                                                             }}
                                                         >
                                                             <div className="feed-top">
@@ -163,68 +197,144 @@ export default function Feed() {
                                                                     <Box fontWeight="bold" fontSize="heading-s">
                                                                         @{u.username}
                                                                     </Box>
-                                                                    <StatusIndicator type="success">Public</StatusIndicator>
+                                                                    <StatusIndicator
+                                                                        type={isPrivate ? "error" : "success"}
+                                                                    >
+                                                                        {isPrivate ? "Private" : "Public"}
+                                                                    </StatusIndicator>
                                                                 </div>
                                                             </div>
 
-                                                            <div className="feed-tags">
-                                                                <span className="feed-tag">
-                                                                    <span className="feed-tagLabel">Industry</span>
-                                                                    <span className="feed-tagValue">{industry}</span>
-                                                                </span>
+                                                            {canView ? (
+                                                                <>
+                                                                    <div className="feed-tags">
+                                                                        <span className="feed-tag">
+                                                                            <span className="feed-tagLabel">Industry</span>
+                                                                            <span className="feed-tagValue">{industry}</span>
+                                                                        </span>
 
-                                                                <span className="feed-tag">
-                                                                    <span className="feed-tagLabel">Title</span>
-                                                                    <span className="feed-tagValue">{title}</span>
-                                                                </span>
+                                                                        <span className="feed-tag">
+                                                                            <span className="feed-tagLabel">Title</span>
+                                                                            <span className="feed-tagValue">{title}</span>
+                                                                        </span>
 
-                                                                <span className="feed-tag">
-                                                                    <span className="feed-tagLabel">Location</span>
-                                                                    <span className="feed-tagValue">{location}</span>
-                                                                </span>
-                                                            </div>
+                                                                        <span className="feed-tag">
+                                                                            <span className="feed-tagLabel">Location</span>
+                                                                            <span className="feed-tagValue">{location}</span>
+                                                                        </span>
+                                                                    </div>
 
-                                                            <Box margin={{ top: "s" }} color="text-body-secondary">
-                                                                {bio.length > 140 ? `${bio.slice(0, 140)}...` : bio}
-                                                            </Box>
+                                                                    <Box margin={{ top: "s" }} color="text-body-secondary">
+                                                                        {bio.length > 140 ? `${bio.slice(0, 140)}...` : bio}
+                                                                    </Box>
 
-                                                            <div className="feed-stats">
-                                                                <div className="feed-stat">
-                                                                    <div className="feed-statValue">{u.projects ?? 0}</div>
-                                                                    <div className="feed-statLabel">Projects</div>
-                                                                </div>
+                                                                    <div className="feed-stats">
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">{u.projects ?? 0}</div>
+                                                                            <div className="feed-statLabel">Projects</div>
+                                                                        </div>
 
-                                                                <div className="feed-stat">
-                                                                    <div className="feed-statValue">{u.experiences ?? 0}</div>
-                                                                    <div className="feed-statLabel">Experiences</div>
-                                                                </div>
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">{u.experiences ?? 0}</div>
+                                                                            <div className="feed-statLabel">Experience</div>
+                                                                        </div>
 
-                                                                <div className="feed-stat">
-                                                                    <div className="feed-statValue">{u.affiliations ?? 0}</div>
-                                                                    <div className="feed-statLabel">Affiliations</div>
-                                                                </div>
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">{u.affiliations ?? 0}</div>
+                                                                            <div className="feed-statLabel">Affiliations</div>
+                                                                        </div>
 
-                                                                <div className="feed-stat">
-                                                                    <div className="feed-statValue">{u.hardSkills ?? 0}</div>
-                                                                    <div className="feed-statLabel">Hard Skills</div>
-                                                                </div>
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">{u.hardSkills ?? 0}</div>
+                                                                            <div className="feed-statLabel">Hard</div>
+                                                                        </div>
 
-                                                                <div className="feed-stat">
-                                                                    <div className="feed-statValue">{u.softSkills ?? 0}</div>
-                                                                    <div className="feed-statLabel">Soft Skills</div>
-                                                                </div>
-                                                            </div>
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">{u.softSkills ?? 0}</div>
+                                                                            <div className="feed-statLabel">Soft</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="feed-tags">
+                                                                        <span className="feed-tag">
+                                                                            <span className="feed-tagLabel">Visibility</span>
+                                                                            <span className="feed-tagValue">Private</span>
+                                                                        </span>
+
+                                                                        <span className="feed-tag">
+                                                                            <span className="feed-tagLabel">Access</span>
+                                                                            <span className="feed-tagValue">
+                                                                                Follow to request
+                                                                            </span>
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <Box margin={{ top: "s" }} color="text-body-secondary">
+                                                                        This portfolio is private. Follow to request access.
+                                                                    </Box>
+
+                                                                    <div className="feed-stats">
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">—</div>
+                                                                            <div className="feed-statLabel">Projects</div>
+                                                                        </div>
+
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">—</div>
+                                                                            <div className="feed-statLabel">Experience</div>
+                                                                        </div>
+
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">—</div>
+                                                                            <div className="feed-statLabel">Affiliations</div>
+                                                                        </div>
+
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">—</div>
+                                                                            <div className="feed-statLabel">Hard</div>
+                                                                        </div>
+
+                                                                        <div className="feed-stat">
+                                                                            <div className="feed-statValue">—</div>
+                                                                            <div className="feed-statLabel">Soft</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            )}
 
                                                             <Box margin={{ top: "s" }}>
-                                                                <Button
-                                                                    variant="primary"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        navigate(`/portfolio/${encodeURIComponent(u.username)}`);
-                                                                    }}
-                                                                >
-                                                                    View portfolio
-                                                                </Button>
+                                                                {canView ? (
+                                                                    <Button
+                                                                        variant="primary"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            navigate(`/portfolio/${encodeURIComponent(u.username)}`);
+                                                                        }}
+                                                                    >
+                                                                        View portfolio
+                                                                    </Button>
+                                                                ) : (
+                                                                    <SpaceBetween direction="horizontal" size="xs">
+                                                                        <Button
+                                                                            variant={isFollowing ? "normal" : "primary"}
+                                                                            loading={!!followBusy[u.username]}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                toggleFollow(u.username, isFollowing);
+                                                                            }}
+                                                                        >
+                                                                            {isFollowing ? "Following" : "Follow"}
+                                                                        </Button>
+
+                                                                        {isConnected ? (
+                                                                            <StatusIndicator type="success">Connected</StatusIndicator>
+                                                                        ) : followedBy ? (
+                                                                            <StatusIndicator type="info">Follows you</StatusIndicator>
+                                                                        ) : null}
+                                                                    </SpaceBetween>
+                                                                )}
                                                             </Box>
                                                         </div>
                                                     </Container>

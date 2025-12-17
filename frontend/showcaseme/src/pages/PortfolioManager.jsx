@@ -256,13 +256,8 @@ export default function PortfolioManager() {
                                     description="Manage projects, experience, affiliations."
                                     actions={
                                         <SpaceBetween direction="horizontal" size="xs">
-                                            <Button variant="link" onClick={goBackToDashboard}>
-                                                ← Back to dashboard
-                                            </Button>
-
-                                            <Button iconName="add-plus" variant="primary" onClick={openAdd}>
-                                                Add
-                                            </Button>
+                                            <Button variant="link" onClick={goBackToDashboard}>← Back to dashboard</Button>
+                                            <Button iconName="add-plus" variant="primary" onClick={openAdd}>Add</Button>
                                         </SpaceBetween>
                                     }
                                 >

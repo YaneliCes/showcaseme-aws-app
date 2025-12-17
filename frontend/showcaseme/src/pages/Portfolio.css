@@ -73,3 +73,15 @@
     font-weight: 600;
     font-size: 13px;
 }
+
+.profile-followRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-followStatus {
+    display: flex;
+    align-items: center;
+    margin-top: 1px;
+}
