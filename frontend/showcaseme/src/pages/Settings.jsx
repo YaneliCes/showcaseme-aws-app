@@ -36,6 +36,14 @@ export default function Settings() {
         cvc: "",
         zip: ""
     });
+    
+    const [mfaEnabled, setMfaEnabled] = useState(false);
+    const [mfaModalOpen, setMfaModalOpen] = useState(false);
+    const [mfaLoading, setMfaLoading] = useState(false);
+    const [mfaSetup, setMfaSetup] = useState(null); // { qr, secret }
+    const [mfaCode, setMfaCode] = useState("");
+    const [mfaStatus, setMfaStatus] = useState(null); // { type, message }
+
 
     // Load current user + profile settings
     useEffect(() => {
@@ -51,6 +59,12 @@ export default function Settings() {
 
                 const profileRes = await fetch("/api/profile", { credentials: "include" });
                 const profileJson = await profileRes.json();
+                
+                const mfaRes = await fetch("/api/mfa/status", { credentials: "include" });
+                const mfaJson = await mfaRes.json().catch(() => ({}));
+                if (mfaRes.ok && mfaJson.status === "success") {
+                    setMfaEnabled(!!mfaJson.enabled);
+                }
 
                 setForm({
                     username: sessionJson.username,
@@ -183,6 +197,106 @@ export default function Settings() {
         setStatus({ type: "success", message: "Purchased! Premium is selected. Click Save changes to apply." });
     };
 
+    const openMfaSetup = async () => {
+        setMfaModalOpen(true);
+        setMfaStatus(null);
+        setMfaSetup(null);
+        setMfaCode("");
+        setMfaLoading(true);
+
+        try {
+            const res = await fetch("/api/mfa/setup", {
+                method: "POST",
+                credentials: "include"
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") {
+                setMfaStatus({ type: "error", message: json.message || "Failed to start MFA setup." });
+                return;
+            }
+
+            setMfaSetup({
+                qr: json.qr,
+                secret: json.secret
+            });
+        } catch (err) {
+            console.error("MFA setup error:", err);
+            setMfaStatus({ type: "error", message: "Failed to start MFA setup." });
+        } finally {
+            setMfaLoading(false);
+        }
+    };
+
+    const verifyMfaSetup = async () => {
+        setMfaStatus(null);
+
+        const code = String(mfaCode || "").trim();
+        if (!code) {
+            setMfaStatus({ type: "error", message: "Enter the 6-digit code from your authenticator app." });
+            return;
+        }
+
+        setMfaLoading(true);
+        try {
+            const res = await fetch("/api/mfa/verify-setup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ code })
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") {
+                setMfaStatus({ type: "error", message: json.message || "Invalid code." });
+                return;
+            }
+
+            setMfaEnabled(true);
+            setMfaStatus({ type: "success", message: "MFA enabled successfully." });
+
+            // Optional: close after success
+            setTimeout(() => {
+                setMfaModalOpen(false);
+                setMfaSetup(null);
+                setMfaCode("");
+                setMfaStatus(null);
+            }, 700);
+        } catch (err) {
+            console.error("MFA verify error:", err);
+            setMfaStatus({ type: "error", message: "Failed to verify MFA." });
+        } finally {
+            setMfaLoading(false);
+        }
+    };
+
+    const disableMfa = async () => {
+        setMfaStatus(null);
+        setMfaLoading(true);
+
+        try {
+            const res = await fetch("/api/mfa/disable", {
+                method: "POST",
+                credentials: "include"
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") {
+                setStatus({ type: "error", message: json.message || "Failed to disable MFA." });
+                return;
+            }
+
+            setMfaEnabled(false);
+            setStatus({ type: "success", message: "MFA disabled." });
+        } catch (err) {
+            console.error("MFA disable error:", err);
+            setStatus({ type: "error", message: "Failed to disable MFA." });
+        } finally {
+            setMfaLoading(false);
+        }
+    };
+
+
     if (loading) {
         return <div className="settings-loading">Loading settings…</div>;
     }
@@ -304,6 +418,31 @@ export default function Settings() {
                                                 onChange={({ detail }) => handleTierChange(detail.selectedOption.value)}
                                             />
                                         </FormField>
+                                    </Container>
+
+                                    {/* MFA */}
+                                    <Container header={<Header variant="h2">Multi-Factor Authentication (MFA)</Header>}>
+                                        <SpaceBetween size="m">
+                                            <Box color="text-body-secondary">
+                                                Add an extra layer of security. You will need a 6-digit code from an authenticator app when logging in.
+                                            </Box>
+
+                                            <StatusIndicator type={mfaEnabled ? "success" : "info"}>
+                                                {mfaEnabled ? "Enabled" : "Not enabled"}
+                                            </StatusIndicator>
+
+                                            <SpaceBetween direction="horizontal" size="s">
+                                                {!mfaEnabled ? (
+                                                    <Button variant="primary" onClick={openMfaSetup} loading={mfaLoading}>
+                                                        Enable MFA
+                                                    </Button>
+                                                ) : (
+                                                    <Button onClick={disableMfa} loading={mfaLoading}>
+                                                        Disable MFA
+                                                    </Button>
+                                                )}
+                                            </SpaceBetween>
+                                        </SpaceBetween>
                                     </Container>
 
                                     {/* STATUS */}
@@ -436,6 +575,134 @@ export default function Settings() {
                                                 </SpaceBetween>
                                             </Form>
                                         )}
+                                    </Modal>
+                                    
+                                    {/* MFA MODAL */}
+                                    <Modal
+                                        visible={mfaModalOpen}
+                                        onDismiss={() => {
+                                            setMfaModalOpen(false);
+                                            setMfaSetup(null);
+                                            setMfaCode("");
+                                            setMfaStatus(null);
+                                        }}
+                                        header="Enable MFA"
+                                        footer={
+                                            <Box float="right">
+                                                <SpaceBetween direction="horizontal" size="xs">
+                                                    <Button
+                                                        variant="link"
+                                                        onClick={() => {
+                                                            setMfaModalOpen(false);
+                                                            setMfaSetup(null);
+                                                            setMfaCode("");
+                                                            setMfaStatus(null);
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="primary"
+                                                        onClick={verifyMfaSetup}
+                                                        loading={mfaLoading}
+                                                        disabled={!mfaSetup}
+                                                    >
+                                                        Verify &amp; Enable
+                                                    </Button>
+                                                </SpaceBetween>
+                                            </Box>
+                                        }
+                                    >
+                                        <div className="mfa-modal">
+                                            <SpaceBetween size="m">
+                                                {mfaStatus && (
+                                                    <div className="mfa-status">
+                                                        <StatusIndicator type={mfaStatus.type === "success" ? "success" : "error"}>
+                                                            {mfaStatus.message}
+                                                        </StatusIndicator>
+                                                    </div>
+                                                )}
+
+                                                {!mfaSetup ? (
+                                                    <div className="mfa-empty">
+                                                        <Box color="text-body-secondary">
+                                                            {mfaLoading
+                                                                ? "Preparing MFA setup..."
+                                                                : "Click Enable MFA to generate a QR code."}
+                                                        </Box>
+
+                                                        <div className="mfa-loader-hint" />
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="mfa-section">
+                                                            <Box fontWeight="bold" fontSize="heading-s">
+                                                                Step 1: Scan the QR code
+                                                            </Box>
+                                                            <Box color="text-body-secondary">
+                                                                Use Google Authenticator, Microsoft Authenticator, Authy, etc.
+                                                            </Box>
+
+                                                            <div className="mfa-qr-wrap">
+                                                                <img
+                                                                    className="mfa-qr"
+                                                                    src={mfaSetup.qr}
+                                                                    alt="MFA QR Code"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mfa-section mfa-secret-section">
+                                                            <Box color="text-body-secondary">
+                                                                If you can’t scan, enter this secret manually:
+                                                            </Box>
+
+                                                            <div className="mfa-secret-row">
+                                                                <div className="mfa-secret" title={mfaSetup.secret}>
+                                                                    {mfaSetup.secret}
+                                                                </div>
+
+                                                                <Button
+                                                                    variant="inline-link"
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            await navigator.clipboard.writeText(String(mfaSetup.secret || ""));
+                                                                            setMfaStatus({ type: "success", message: "Secret copied to clipboard." });
+                                                                        } catch (err) {
+                                                                            setMfaStatus({ type: "error", message: "Could not copy secret." });
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Copy
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mfa-section">
+                                                            <Box fontWeight="bold" fontSize="heading-s">
+                                                                Step 2: Enter the 6-digit code
+                                                            </Box>
+
+                                                            <FormField label="Authenticator code">
+                                                                <Input
+                                                                    value={mfaCode}
+                                                                    placeholder="123456"
+                                                                    inputMode="numeric"
+                                                                    onChange={({ detail }) => {
+                                                                        const next = String(detail.value || "").replace(/\D/g, "").slice(0, 6);
+                                                                        setMfaCode(next);
+                                                                    }}
+                                                                />
+                                                                <Box color="text-body-secondary" className="mfa-helper">
+                                                                    Tip: the code changes every ~30 seconds.
+                                                                </Box>
+                                                            </FormField>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </SpaceBetween>
+                                        </div>
                                     </Modal>
                                 </SpaceBetween>
                             </ContentLayout>

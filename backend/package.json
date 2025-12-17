@@ -16,6 +16,8 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
-    "mariadb": "^3.4.5"
+    "mariadb": "^3.4.5",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0"
   }
 }

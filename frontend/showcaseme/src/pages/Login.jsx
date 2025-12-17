@@ -113,6 +113,11 @@ const Login = () => {
             const json = await response.json();
             console.log("Login response:", json);
 
+            if (json.status === "mfa_required") {
+                navigate("/mfa");
+                return;
+            }
+            
             if (!response.ok || json.status !== "success") {
                 setServerResponse(json.message || "Login failed. Please try again.");
                 return;

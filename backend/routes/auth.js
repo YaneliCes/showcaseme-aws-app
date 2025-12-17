@@ -103,8 +103,12 @@ router.post("/login", async (req, res) => {
             const field = isEmail ? "email" : "username";
             const lookupValue = isEmail ? identifier.toLowerCase() : identifier;
 
+            // Only select what we need (and includes MFA fields)
             const rows = await conn.query(
-                `SELECT * FROM Users WHERE ${field} = ? LIMIT 1`,
+                `SELECT id, email, username, password, mfa_enabled, mfa_secret
+                FROM Users
+                WHERE ${field} = ?
+                LIMIT 1`,
                 [lookupValue]
             );
 
@@ -118,7 +122,6 @@ router.post("/login", async (req, res) => {
             const user = rows[0];
 
             const match = await bcrypt.compare(password, user.password);
-
             if (!match) {
                 return res.status(401).json({
                     status: "error",
@@ -127,7 +130,23 @@ router.post("/login", async (req, res) => {
             }
 
             const userId = Number(user.id);
+            const mfaEnabled = Number(user.mfa_enabled) === 1;
 
+            // If MFA is enabled, do NOT fully log in yet
+            if (mfaEnabled) {
+                req.session.mfa_pending = {
+                    id: userId,
+                    username: user.username,
+                    email: user.email
+                };
+
+                return res.json({
+                    status: "mfa_required",
+                    message: "MFA required."
+                });
+            }
+
+            // Normal login success (no MFA)
             req.session.user = {
                 id: userId,
                 username: user.username,
@@ -158,6 +177,94 @@ router.post("/login", async (req, res) => {
         }
     } catch (err) {
         console.error("Login crash:", err);
+        return res.status(500).json({
+            status: "error",
+            message: "Unexpected server error.",
+        });
+    }
+});
+
+// POST /api/login/mfa
+const speakeasy = require("speakeasy");
+router.post("/login/mfa", async (req, res) => {
+    try {
+        const code = String(req.body.code || "").trim();
+
+        if (!code) {
+            return res.status(400).json({ status: "error", message: "Code is required." });
+        }
+
+        if (!req.session || !req.session.mfa_pending) {
+            return res.status(400).json({ status: "error", message: "No MFA login in progress." });
+        }
+
+        const pending = req.session.mfa_pending;
+        const userId = Number(pending.id);
+
+        const conn = await getConnection();
+        try {
+            const rows = await conn.query(
+                `SELECT id, email, username, mfa_enabled, mfa_secret
+                FROM Users
+                WHERE id = ?
+                LIMIT 1`,
+                [userId]
+            );
+
+            const user = rows?.[0];
+            if (!user) {
+                return res.status(401).json({ status: "error", message: "Invalid session." });
+            }
+
+            if (Number(user.mfa_enabled) !== 1 || !user.mfa_secret) {
+                return res.status(400).json({ status: "error", message: "MFA not enabled for this account." });
+            }
+
+            const ok = speakeasy.totp.verify({
+                secret: user.mfa_secret,
+                encoding: "base32",
+                token: code,
+                window: 1
+            });
+
+            if (!ok) {
+                return res.status(401).json({ status: "error", message: "Invalid MFA code." });
+            }
+
+            // Finalize login
+            req.session.user = {
+                id: Number(user.id),
+                username: user.username,
+                email: user.email
+            };
+
+            // Clear pending state
+            delete req.session.mfa_pending;
+
+            await logActivity(req, {
+                eventType: "login_mfa",
+                route: "/api/login/mfa",
+                metadata: {
+                    id: Number(user.id),
+                    username: user.username,
+                    email: user.email,
+                },
+            });
+
+            return res.json({
+                status: "success",
+                message: "MFA verified.",
+                user: {
+                    id: Number(user.id),
+                    username: user.username,
+                    email: user.email
+                }
+            });
+        } finally {
+            conn.release();
+        }
+    } catch (err) {
+        console.error("Login MFA crash:", err);
         return res.status(500).json({
             status: "error",
             message: "Unexpected server error.",
