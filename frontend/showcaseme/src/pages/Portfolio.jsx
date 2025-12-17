@@ -481,14 +481,15 @@ export default function Portfolio() {
 
                                                                         {renderDetails(p.details)}
                                                                     </div>
-
-                                                                    {p.url && (
-                                                                        <Badge>
-                                                                            <Link external href={p.url} variant="primary">
-                                                                                {safeHost(p.url) || "Link"}
-                                                                            </Link>
-                                                                        </Badge>
-                                                                    )}
+                                                                    <div className="profile-link">
+                                                                        {p.url && (
+                                                                            <Badge>
+                                                                                <Link external href={p.url} variant="primary">
+                                                                                    {safeHost(p.url) || "Link"}
+                                                                                </Link>
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             );
                                                         })
