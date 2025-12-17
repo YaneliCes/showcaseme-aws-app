@@ -54,10 +54,32 @@ export default function PortfolioManager() {
         navigate("/dashboard");
     };
 
-
     const showMsg = (type, content) => {
         setFlash([{ type, content, dismissible: true, onDismiss: () => setFlash([]), id: "msg" }]);
     };
+
+    function cleanUrl(input) {
+        const raw = String(input || "").trim();
+        if (!raw) return null;
+
+        // If user already typed a scheme like "ftp:" or "file:" or "javascript:", reject unless http/https
+        const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(raw);
+        if (hasScheme && !/^https?:/i.test(raw)) return null;
+
+        let u;
+        try {
+            // If no scheme, assume https://
+            u = new URL(/^https?:/i.test(raw) ? raw : `https://${raw}`);
+        } catch {
+            return null;
+        }
+
+        // Only allow http/https
+        if (!["http:", "https:"].includes(u.protocol)) return null;
+
+        if (u.href.length > 2048) return null;
+        return u.href;
+    }
 
     const loadEntries = async (type) => {
         setLoading(true);
@@ -132,6 +154,18 @@ export default function PortfolioManager() {
             return;
         }
 
+        // Validate/normalize URL
+        let safeUrl = null;
+        if (!isEducation && form.url && String(form.url).trim()) {
+            safeUrl = cleanUrl(form.url);
+
+            // If user typed something but it's not safe/valid, block save
+            if (!safeUrl) {
+                showMsg("error", "Invalid URL. Only http/https links are allowed.");
+                return;
+            }
+        }
+
         setSaving(true);
         try {
             const isEdit = !!form.id;
@@ -147,7 +181,7 @@ export default function PortfolioManager() {
                 start_date: form.start_date || null,
                 end_date: form.is_current ? null : (form.end_date || null),
                 is_current: form.is_current ? 1 : 0,
-                url: form.url || null,
+                url: isEducation ? null : safeUrl,
                 details: form.details || null,
                 display_order: Number(form.display_order || 0),
             };
@@ -235,7 +269,10 @@ export default function PortfolioManager() {
             {
                 id: "url",
                 header: "Link",
-                cell: (e) => e.url ? (<Link external href={e.url}>Open</Link>) : ("—"),
+                cell: (e) => {
+                    const safe = cleanUrl(e.url);
+                    return safe ? <Link external href={safe}>Open</Link> : "—";
+                },
             },
             {
                 id: "actions",
