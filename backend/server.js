@@ -12,6 +12,7 @@ const followRouter = require("./routes/follow");
 const networkRouter = require("./routes/network");
 const learnRouter = require("./routes/learn");
 const settingsRouter = require("./routes/settings");
+const mfaRoutes = require("./routes/mfa");
 
 dotenv.config();
 
@@ -79,6 +80,9 @@ app.use("/api/learn", learnRouter);
 
 // Settings route
 app.use("/api/settings", settingsRouter);
+
+// MFA route
+app.use("/api/mfa", mfaRoutes);
 
 // Health check
 app.get("/healthz", (req, res) => res.send("OK"));

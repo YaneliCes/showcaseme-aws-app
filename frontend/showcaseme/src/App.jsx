@@ -17,6 +17,7 @@ import Feed from "./pages/Feed";
 import Network from "./pages/Network";
 import Learn from "./pages/Learn";
 import Settings from "./pages/Settings";
+import Mfa from "./pages/Mfa";
 
 import { usePageTracking } from "./hooks/usePageTracking";
 
@@ -53,6 +54,7 @@ function App() {
             <Route path="network" element={<Network />} />
             <Route path="learn" element={<Learn />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="mfa" element={<Mfa />} />
         </Routes>
         <Footer />
     </div>
