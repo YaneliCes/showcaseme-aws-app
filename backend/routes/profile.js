@@ -172,6 +172,13 @@ router.get("/stats", async (req, res) => {
             [userId]
         );
 
+        const [educationRow] = await conn.query (
+            `SELECT COUNT(*) AS c
+            FROM PortfolioEntries
+            WHERE user_id = ? AND type = 'education'`,
+            [userId]
+        );
+
         const [affiliationsRow] = await conn.query (
             `SELECT COUNT(*) AS c
             FROM PortfolioEntries
@@ -216,6 +223,7 @@ router.get("/stats", async (req, res) => {
             stats: {
                 projects: Number(projectsRow?.c || 0),
                 experiences: Number(experienceRow?.c || 0),
+                educations: Number(educationRow?.c || 0),
                 affiliations: Number(affiliationsRow?.c || 0),
                 hardSkills: Number(hardSkillsRow?.c || 0),
                 softSkills: Number(softSkillsRow?.c || 0),

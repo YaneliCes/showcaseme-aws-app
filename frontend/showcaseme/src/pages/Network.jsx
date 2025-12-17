@@ -21,6 +21,12 @@ export default function Network() {
 
     const [followBusy, setFollowBusy] = useState({});
 
+    const [followCounts, setFollowCounts] = useState({
+        followers: 0,
+        following: 0,
+    });
+    const [followCountsLoading, setFollowCountsLoading] = useState(true);
+
     const safeText = (text) => (String(text || "").trim() ? String(text) : "");
     const makeLocation = (u) => [u.city, u.state, u.country].filter(Boolean).join(", ");
     const avatarLetter = (username) => (username?.[0]?.toUpperCase() || "?");
@@ -34,6 +40,42 @@ export default function Network() {
         }
         return true;
     };
+
+    const loadMyFollowCounts = async () => {
+        setFollowCountsLoading(true);
+        try {
+            // get current session (and username)
+            const sessionRes = await fetch("/api/session", { credentials: "include" });
+            const sessionJson = await sessionRes.json().catch(() => ({}));
+
+            if (!sessionRes.ok || sessionJson.status !== "success") {
+                navigate("/login");
+                return;
+            }
+
+            const me = String(sessionJson.username || "").trim();
+            if (!me) return;
+
+            const followRes = await fetch(`/api/follow/${encodeURIComponent(me)}`, {
+                method: "GET",
+                credentials: "include",
+            });
+
+            const followJson = await followRes.json().catch(() => ({}));
+
+            if (followRes.ok && followJson.status === "success") {
+                setFollowCounts({
+                    followers: Number(followJson.meta?.counts?.followers || 0),
+                    following: Number(followJson.meta?.counts?.following || 0),
+                });
+            }
+        } catch (err) {
+            console.error("Follow counts load error:", err);
+        } finally {
+            setFollowCountsLoading(false);
+        }
+    };
+
 
     const loadFollowing = async (query) => {
         setLoading(true);
@@ -135,13 +177,45 @@ export default function Network() {
         }
     };
 
+    const unfollow = async (username) => {
+        if (!username) return;
+
+        setFollowBusy((m) => ({ ...m, [username]: true }));
+        try {
+            const res = await fetch(`/api/follow/${encodeURIComponent(username)}`, {
+                method: "DELETE",
+                credentials: "include"
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") return;
+
+            await loadFollowing(q);
+            await refreshPendingCount();
+        } catch (err) {
+            console.error("Unfollow error:", err);
+        } finally {
+            setFollowBusy((m) => ({ ...m, [username]: false }));
+        }
+    };
+
     useEffect(() => {
-        // First time landing on the page, load the default tab list AND pending count
+        let cancelled = false;
+
         const boot = async () => {
             await loadFollowing("");
             await refreshPendingCount();
+
+            if (!cancelled) {
+                await loadMyFollowCounts();
+            }
         };
+
         boot();
+
+        return () => {
+                cancelled = true;
+        };
     }, []);
 
     useEffect(() => {
@@ -161,13 +235,7 @@ export default function Network() {
 
     const renderCards = (list, mode) => {
         return (
-            <Grid
-                gridDefinition={[
-                    { colspan: { default: 12, s: 6, l: 4 } },
-                    { colspan: { default: 12, s: 6, l: 4 } },
-                    { colspan: { default: 12, s: 6, l: 4 } }
-                ]}
-            >
+            <div className="network-grid">
                 {list.map((u) => {
                     const location = makeLocation(u) || "—";
                     const industry = safeText(u.industry_name) || "—";
@@ -296,15 +364,28 @@ export default function Network() {
                                                     Follow back
                                                 </Button>
                                             ) : (
-                                                <Button
-                                                    variant="primary"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/portfolio/${encodeURIComponent(u.username)}`);
-                                                    }}
-                                                >
-                                                    View portfolio
-                                                </Button>
+                                                <div className="network-actionsRow">
+                                                    <Button
+                                                        variant="primary"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/portfolio/${encodeURIComponent(u.username)}`);
+                                                        }}
+                                                    >
+                                                        View portfolio
+                                                    </Button>
+
+                                                    <Button
+                                                            className="network-unfollowBtn"
+                                                            loading={!!followBusy[u.username]}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                unfollow(u.username);
+                                                            }}
+                                                        >
+                                                            Unfollow
+                                                    </Button>
+                                                </div>
                                             )}
                                         </Box>
                                     </>
@@ -313,7 +394,7 @@ export default function Network() {
                         </Container>
                     );
                 })}
-            </Grid>
+            </div>
         );
     };
 
@@ -327,8 +408,23 @@ export default function Network() {
                     content={
                         <div className="network-page">
                             <ContentLayout
+                                // header={
+                                //     <Header variant="h1" description="Manage your network and pending connections."> Your Network </Header>
+                                // }
                                 header={
-                                    <Header variant="h1" description="Manage your network and pending connections."> Your Network </Header>
+                                    <Header 
+                                        variant="h1" 
+                                        description="Manage your network and pending connections."
+                                        actions={
+                                            <SpaceBetween direction="horizontal" size="xs">
+                                                <Button variant="link" onClick={() => navigate("/feed")}>
+                                                    ← Back to Feed
+                                                </Button>
+                                            </SpaceBetween>
+                                        }
+                                    > 
+                                        Your Network 
+                                    </Header>
                                 }
                             >
                                 <SpaceBetween size="l">
@@ -344,12 +440,12 @@ export default function Network() {
                                                     {
                                                         id: "following",
                                                         label: "Following",
-                                                        content: null
+                                                        content: <div className="network-tabsEmpty" />
                                                     },
                                                     {
                                                         id: "pending",
                                                         label: `Pending (${pendingCount})`,
-                                                        content: null
+                                                        content: <div className="network-tabsEmpty" />
                                                     }
                                                 ]}
                                             />
@@ -374,12 +470,28 @@ export default function Network() {
                                                 >
                                                     Clear
                                                 </Button>
-                                                <Button variant="link" onClick={() => navigate("/feed")}>
-                                                    Back to Feed
-                                                </Button>
+                                                {/* <Button variant="link" onClick={() => navigate("/feed")}>
+                                                    ← Back to Feed
+                                                </Button> */}
                                             </SpaceBetween>
                                         </SpaceBetween>
                                     </Container>
+
+                                    <div className="dash-followCounts">
+                                        <span className="dash-followPill">
+                                            <span className="dash-followNum">
+                                                {followCountsLoading ? "—" : followCounts.followers}
+                                            </span>
+                                            <span className="dash-followLabel">Followers</span>
+                                        </span>
+
+                                        <span className="dash-followPill">
+                                            <span className="dash-followNum">
+                                                {followCountsLoading ? "—" : followCounts.following}
+                                            </span>
+                                            <span className="dash-followLabel">Following</span>
+                                        </span>
+                                    </div>
 
                                     {loading ? (
                                         <Box color="text-body-secondary">Loading...</Box>

@@ -13,6 +13,8 @@ const networkRouter = require("./routes/network");
 const learnRouter = require("./routes/learn");
 const settingsRouter = require("./routes/settings");
 const mfaRoutes = require("./routes/mfa");
+const path = require("path");
+const resumeUploadRouter = require("./routes/resumeUpload");
 
 dotenv.config();
 
@@ -52,6 +54,19 @@ app.use(
             },
     })
 );
+
+// Resume uploads static serving
+app.use(
+    "/uploads",
+    express.static(path.join(__dirname, "uploads"), {
+        setHeaders: (res) => {
+            res.setHeader("X-Content-Type-Options", "nosniff");
+        },
+    })
+);
+
+// Resume upload route
+app.use("/api/profile/resume", resumeUploadRouter);
 
 // Auth routes (register, login, logout, session))
 app.use("/api", authRouter);

@@ -12,7 +12,7 @@ const TYPE_LABELS = {
     project: "Projects",
     job: "Experiences",
     affiliation: "Affiliations",
-    education: "Education",
+    education: "Education ",
 };
 
 const emptyForm = (type) => ({
@@ -38,6 +38,8 @@ export default function PortfolioManager() {
     const [activeType, setActiveType] = useState(
         allowed.has(typeFromUrl) ? typeFromUrl : "project"
     );
+    
+    const isEducation = activeType === "education";
 
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -49,10 +51,6 @@ export default function PortfolioManager() {
     const [flash, setFlash] = useState([]);
 
     const goBackToDashboard = () => {
-        if (window.history.length > 1) {
-            navigate(-1);
-            return;
-        }
         navigate("/dashboard");
     };
 
@@ -202,6 +200,15 @@ export default function PortfolioManager() {
     const columns = useMemo(
         () => [
             {
+                id: "order",
+                header: "Order",
+                cell: (e) => (
+                    <div>
+                        <Box fontWeight="bold">{form.display_order}</Box>
+                    </div>
+                ),
+            },
+            {
                 id: "title",
                 header: "Title",
                 cell: (e) => (
@@ -219,6 +226,11 @@ export default function PortfolioManager() {
                     const end = e.is_current ? "Present" : (e.end_date ? String(e.end_date).slice(0, 10) : "—");
                     return `${s} → ${end}`;
                 },
+            },
+            {
+                id: "details",
+                header: "Details",
+                cell: (e) => e.details ? (<Box color="text-body-secondary">{e.details}</Box>) : ("—"),
             },
             {
                 id: "url",
@@ -287,6 +299,11 @@ export default function PortfolioManager() {
                                             content: null,
                                         },
                                         {
+                                            id: "education",
+                                            label: TYPE_LABELS.education,
+                                            content: null,
+                                        },
+                                        {
                                             id: "affiliation",
                                             label: TYPE_LABELS.affiliation,
                                             content: null,
@@ -324,7 +341,7 @@ export default function PortfolioManager() {
                                 >
                                     <Form>
                                         <SpaceBetween size="m">
-                                            <FormField label="Title" description="Ex: ShowcaseMe, IT Intern, NJIT Cybersecurity Club">
+                                            <FormField label="Title" description="Ex: ShowcaseMe, IT Intern, Cybersecurity Club, Major">
                                                 <Input
                                                     value={form.title}
                                                     onChange={({ detail }) =>
@@ -391,30 +408,34 @@ export default function PortfolioManager() {
                                                 </FormField>
                                             </SpaceBetween>
 
-                                            <FormField label="URL" description="Optional link (GitHub, live demo, org page)">
-                                                <Input
-                                                    value={form.url}
-                                                    onChange={({ detail }) =>
-                                                        setForm((p) => ({
-                                                            ...p,
-                                                            url: detail.value,
-                                                        }))
-                                                    }
-                                                />
-                                            </FormField>
+                                            {!isEducation && (
+                                                <FormField label="URL" description="Optional link (GitHub, live demo, org page)">
+                                                    <Input
+                                                        value={form.url}
+                                                        onChange={({ detail }) =>
+                                                            setForm((p) => ({
+                                                                ...p,
+                                                                url: detail.value,
+                                                            }))
+                                                        }
+                                                    />
+                                                </FormField>
+                                            )}
 
-                                            <FormField label="Details" description="Optional bullet-ish description">
-                                                <Textarea
-                                                    rows={5}
-                                                    value={form.details}
-                                                    onChange={({ detail }) =>
-                                                        setForm((p) => ({
-                                                            ...p,
-                                                            details: detail.value,
-                                                        }))
-                                                    }
-                                                />
-                                            </FormField>
+                                            {!isEducation && (
+                                                <FormField label="Details" description="Optional bullet-ish description">
+                                                    <Textarea
+                                                        rows={5}
+                                                        value={form.details}
+                                                        onChange={({ detail }) =>
+                                                            setForm((p) => ({
+                                                                ...p,
+                                                                details: detail.value,
+                                                            }))
+                                                        }
+                                                    />
+                                                </FormField>
+                                            )}
 
                                             <FormField label="Display order" description="Lower appears first (0 is fine).">
                                                 <Input

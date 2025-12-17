@@ -25,6 +25,109 @@
 }
 
 /* ─────────────────────────────────────────────
+   FOLLOWER/FOLLOWING
+───────────────────────────────────────────── */
+.dash-followCounts {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.dash-followPill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 0px;
+}
+
+.dash-followNum {
+    font-weight: 800;
+    font-size: 13px;
+}
+
+.dash-followLabel {
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+
+/* ─────────────────────────────────────────────
+   PROFILE EDIT FORM
+───────────────────────────────────────────── */
+.profile-edit-form {
+  max-height: min(70vh, 520px);
+  overflow-y: scroll;
+  overflow-x: hidden;
+  padding-right: 6px;
+  box-sizing: border-box;
+}
+
+.profile-edit-form::-webkit-scrollbar {
+  width: 10px;
+}
+
+.profile-edit-form::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-edit-form::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+}
+
+body.awsui-dark-mode .profile-edit-form::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+.profile-edit-form * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-edit-form .awsui_table_1q1i2,
+.profile-edit-form .awsui_table-container_1q1i2 {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Resume uploader */
+.resume-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.resume-fileInput {
+    flex: 1;
+    min-width: 260px;
+}
+
+.resume-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 2px;
+    flex-wrap: wrap;
+}
+
+.resume-link {
+    color: #0972d3;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.resume-link:visited {
+    color: #5f2eea;
+}
+
+.resume-link:hover {
+    text-decoration: none;
+}
+
+/* ─────────────────────────────────────────────
    PROFILE HEADER
 ───────────────────────────────────────────── */
 .dash-profileHeader {
@@ -79,6 +182,14 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+}
+
+/* Privacy text */
+.dash-privacyText {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
 }
 
 /* Profile Tags */
