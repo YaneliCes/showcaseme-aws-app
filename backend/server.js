@@ -10,6 +10,7 @@ const feedRouter = require("./routes/feed");
 const publicPortfolioRouter = require("./routes/publicPortfolio");
 const followRouter = require("./routes/follow");
 const networkRouter = require("./routes/network");
+const learnRouter = require("./routes/learn");
 const settingsRouter = require("./routes/settings");
 
 dotenv.config();
@@ -72,6 +73,9 @@ app.use("/api/follow", followRouter);
 
 // Connection network route
 app.use("/api/network", networkRouter);
+
+// Learn resources route
+app.use("/api/learn", learnRouter);
 
 // Settings route
 app.use("/api/settings", settingsRouter);

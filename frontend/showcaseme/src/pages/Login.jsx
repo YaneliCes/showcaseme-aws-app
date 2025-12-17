@@ -28,7 +28,7 @@ const Login = () => {
                 if (!trimmed) return "Username or email is required.";
 
                 if (trimmed.includes("@")) {
-                    // treat like email
+                    // Treat like email
                     if (trimmed.length > 100) {
                         return "Too many characters. Max 100 characters.";
                     }
@@ -36,7 +36,7 @@ const Login = () => {
                         return "Please enter a valid email address.";
                     }
                 } else {
-                    // treat like username
+                    // Treat like username
                     if (trimmed.length > 30) {
                         return "Too many characters. Max 30 characters.";
                     }
