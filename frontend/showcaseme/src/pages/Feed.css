@@ -26,7 +26,7 @@
     font-weight: 800;
     font-size: 18px;
     background: rgb(232, 231, 231);
-    border: 2px solid black;
+    border: 2px solid rgb(210, 209, 209);
 }
 
 body.awsui-dark-mode .feed-avatar {
@@ -54,7 +54,13 @@ body.awsui-dark-mode .feed-avatar {
     align-items: center;
     padding: 8px 10px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.10);
+    border: 2px solid rgb(210, 209, 209);
+    /* background: rgba(255, 255, 255, 0.10); */
+    background: rgba(232, 231, 231, 0.236);
+}
+
+body.awsui-dark-mode .feed-tag {
+    border-color: rgba(255, 255, 255, 0);
 }
 
 .feed-tagLabel {
@@ -78,8 +84,14 @@ body.awsui-dark-mode .feed-avatar {
 .feed-stat {
     padding: 10px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.10);
+    border: 2px solid rgb(210, 209, 209);
+    /* background: rgba(255, 255, 255, 0.10); */
+    background: rgba(232, 231, 231, 0.236);
     text-align: center;
+}
+
+body.awsui-dark-mode .feed-stat {
+    border-color: rgba(255, 255, 255, 0);
 }
 
 .feed-statValue {
@@ -91,4 +103,65 @@ body.awsui-dark-mode .feed-avatar {
     font-size: 12px;
     opacity: 0.8;
     margin-top: 4px;
+}
+
+.feed-page .awsui_grid_1wepy_1 {
+    align-items: stretch;
+}
+
+.feed-page .awsui_grid_1wepy_1 > * {
+    flex: 0 0 auto !important;
+}
+
+.feed-card {
+    width: 100%;
+}
+
+.feed-card .awsui_container_1wepy_1 {
+    height: 100%;
+}
+
+.feed-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    align-items: stretch;
+}
+
+.feed-card {
+    width: 100%;
+}
+
+.feed-card .awsui_container_1wepy_1 {
+    height: 100%;
+}
+
+.feed-actionsRow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Follow button (green) */
+.feed-followBtn {
+    background: #299350 !important;
+    border-color: #299350 !important;
+    color: #ffffff !important;
+}
+
+.feed-followBtn:hover {
+    background: #15803d !important;
+    border-color: #15803d !important;
+}
+
+/* Following state (neutral/outlined look) */
+.feed-followBtnFollowing {
+    background: transparent !important;
+    border: 2px solid rgba(0, 0, 0, 0.25) !important;
+    color: inherit !important;
+}
+
+body.awsui-dark-mode .feed-followBtnFollowing {
+    border-color: rgba(255, 255, 255, 0.35) !important;
 }

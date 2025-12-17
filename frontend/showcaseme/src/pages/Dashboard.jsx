@@ -7,7 +7,7 @@ import { FaUserEdit, FaFolderOpen } from "react-icons/fa";
 import "@cloudscape-design/global-styles/index.css";
 import {
     AppLayout, BreadcrumbGroup, ContentLayout, Header, Box, SpaceBetween, Button, Badge, SideNavigation, 
-    StatusIndicator, KeyValuePairs, Container, Grid, Tabs, Modal, Form, FormField, Input, Textarea, Select
+    StatusIndicator, KeyValuePairs, Container, Grid, Tabs, Modal, Form, FormField, Input, Textarea, Select, FileInput, Table
 } from "@cloudscape-design/components";
 import { I18nProvider } from "@cloudscape-design/components/i18n";
 import messages from "@cloudscape-design/components/i18n/messages/all.en";
@@ -26,6 +26,21 @@ export default function Dashboard() {
         return saved === "dark" ? "dark" : "light";
     });
 
+    const topRef = React.useRef(null);
+    const skillsRef = React.useRef(null);
+
+    const scrollToSkills = () => {
+        setNavigationOpen(false);
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                skillsRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+            });
+        });
+    };
+
     // Profile data
     const [profile, setProfile] = useState({
         bio: "",
@@ -33,6 +48,7 @@ export default function Dashboard() {
         industryName: "",
         privacy: "public",
         tier: "free",
+        resume_url: "",
         title: "",
         city: "",
         state: "",
@@ -41,6 +57,18 @@ export default function Dashboard() {
     });
     const [profileLoading, setProfileLoading] = useState(true);
     const [editProfileOpen, setEditProfileOpen] = useState(false);
+
+    // Resume file upload
+    const [resumeFiles, setResumeFiles] = useState([]);
+    const [resumeBusy, setResumeBusy] = useState(false);
+    const [resumeMsg, setResumeMsg] = useState(null);
+
+    // Following/Follower count
+    const [followCounts, setFollowCounts] = useState({
+        followers: 0,
+        following: 0,
+    });
+    const [followCountsLoading, setFollowCountsLoading] = useState(true);
 
     // Industry options data
     const [industries, setIndustries] = useState([]);
@@ -55,6 +83,7 @@ export default function Dashboard() {
     // Portfolio entry items data (projects, experiences, affiliations)
     const [projects, setProjects] = useState([]);
     const [experiences, setExperiences] = useState([]);
+    const [educations, setEducations] = useState([]);
     const [affiliations, setAffiliations] = useState([]);
     const [entriesLoading, setEntriesLoading] = useState(true);
 
@@ -108,11 +137,81 @@ export default function Dashboard() {
         }
     };
 
+    // Fixes data from "2025-12-10T05:00:00.000Z" to "2025-12-10"
     const fmtDate = (d) => {
-        if (!d) return "";
-        // Fixes data from "2025-12-10T05:00:00.000Z" to "2025-12-10"
-        if (typeof d === "string") return d.slice(0, 10);
-        return new Date(d).toISOString().slice(0, 10);
+            if (!d) return "";
+            if (typeof d === "string") return d.slice(0, 10);
+            return new Date(d).toISOString().slice(0, 10);
+        };
+
+    // Validate the type of file being uploaded and size
+    const validatePdfFile = (file) => {
+        if (!file) return "Please choose a file.";
+
+        const name = String(file.name || "").toLowerCase();
+
+        // Only allow .pdf extension (blocks .pdf.php / double extensions)
+        if (!name.endsWith(".pdf")) return "Only .pdf files are allowed.";
+
+        // Basic denylist
+        if (name.includes(".php") || name.includes(".phtml") || name.includes(".phar")) {
+            return "Invalid filename.";
+        }
+
+        // Size limit (match server)
+        const maxBytes = 2 * 1024 * 1024; // 2MB
+        if (file.size > maxBytes) return "PDF must be 2MB or smaller.";
+
+        // MIME check (spoofable, but good UX)
+        if (file.type && file.type !== "application/pdf") return "Only PDF files are allowed.";
+
+        return "";
+    };
+
+    // Handle file upload
+    const uploadResume = async () => {
+        setResumeMsg(null);
+
+        const file = resumeFiles?.[0];
+        const err = validatePdfFile(file);
+        if (err) {
+            setResumeMsg({ type: "error", text: err });
+            return;
+        }
+
+        setResumeBusy(true);
+        try {
+            const fd = new FormData();
+            fd.append("resume", file);
+
+            const res = await fetch("/api/profile/resume", {
+            method: "POST",
+            credentials: "include",
+            body: fd,
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") {
+            setResumeMsg({ type: "error", text: json.message || "Upload failed." });
+            return;
+            }
+
+            // Update UI + profile
+            setProfile((p) => ({ ...p, resume_url: json.resume_url }));
+            setResumeFiles([]);
+            setResumeMsg({ type: "success", text: "Resume uploaded!" });
+        } catch (e) {
+            console.error("uploadResume error:", e);
+            setResumeMsg({ type: "error", text: "Upload failed." });
+        } finally {
+            setResumeBusy(false);
+        }
+    };
+
+    const toAbsoluteUrl = (u) => {
+        if (!u) return "";
+        if (u.startsWith("http://") || u.startsWith("https://")) return u;
+        return `${window.location.origin}${u}`;
     };
 
 
@@ -152,6 +251,27 @@ export default function Dashboard() {
                     });
                 }
 
+                // 1b) Fetch follower/following counts for current user
+                setFollowCountsLoading(true);
+                try {
+                    const followRes = await fetch(`/api/follow/${encodeURIComponent(sessionJson.username)}`, {
+                        method: "GET",
+                        credentials: "include",
+                    });
+
+                    const followJson = await followRes.json().catch(() => ({}));
+                    if (!cancelled && followRes.ok && followJson.status === "success") {
+                        setFollowCounts({
+                            followers: Number(followJson.meta?.counts?.followers || 0),
+                            following: Number(followJson.meta?.counts?.following || 0),
+                        });
+                    }
+                } catch (err) {
+                    console.error("Follow counts load error:", err);
+                } finally {
+                    if (!cancelled) setFollowCountsLoading(false);
+                }
+
                 // 2) Fetch profile
                 const profileRes = await fetch("/api/profile", {
                     method: "GET",
@@ -169,6 +289,7 @@ export default function Dashboard() {
                             industryName: p.industry_name || "",
                             privacy: p.privacy || "public",
                             tier: p.tier || "free",
+                            resume_url: p.resume_url || "",
                             title: p.title || "",
                             city: p.city || "",
                             state: p.state || "",
@@ -210,15 +331,17 @@ export default function Dashboard() {
                 }
 
                 // 4) Fetch portfolio previews (projects, experiences, affiliations)
-                const [projectRes, experienceRes, affiliationRes] = await Promise.all([
+                const [projectRes, experienceRes, educationRes, affiliationRes] = await Promise.all([
                     fetch("/api/profile/entries?type=project", { method: "GET", credentials: "include" }),
                     fetch("/api/profile/entries?type=job", { method: "GET", credentials: "include" }),
+                    fetch("/api/profile/entries?type=education", { method: "GET", credentials: "include" }),
                     fetch("/api/profile/entries?type=affiliation", { method: "GET", credentials: "include" }),
                 ]);
 
-                const [projectJson, experienceJson, affiliationJson] = await Promise.all([
+                const [projectJson, experienceJson, educationJson, affiliationJson] = await Promise.all([
                     projectRes.json(),
                     experienceRes.json(),
+                    educationRes.json(),
                     affiliationRes.json(),
                 ]);
 
@@ -226,6 +349,7 @@ export default function Dashboard() {
                 if (!cancelled) {
                     if (projectRes.ok && projectJson.status === "success") setProjects(projectJson.entries || []);
                     if (experienceRes.ok && experienceJson.status === "success") setExperiences(experienceJson.entries || []);
+                    if (educationRes.ok && educationJson.status === "success") setEducations(educationJson.entries || []);
                     if (affiliationRes.ok && affiliationJson.status === "success") setAffiliations(affiliationJson.entries || []);
                     setEntriesLoading(false);
                 }
@@ -254,10 +378,10 @@ export default function Dashboard() {
     const avatarLetter = displayName?.[0]?.toUpperCase() || "?";
     const industry = profile.industryName?.trim() ? profile.industryName : "Add industry (Edit profile)";
     const privacy = profile.privacy === "private" ? "Private" : "Public";
+    const resume = profile.resume_url ? profile.resume_url : "Upload a resume for others to see.";
     const bio = profile.bio?.trim() ? profile.bio : "Add a short bio so people understand what you’re about.";
     const title = profile.title?.trim() ? profile.title : "Add title (Edit profile)";
     const location = [profile.city, profile.state, profile.country].filter(Boolean).join(", ") || "Add location (Edit profile)";
-
 
     // Stat data display values
     const [stats, setStats] = useState({
@@ -328,6 +452,8 @@ export default function Dashboard() {
                     <AppLayout
                         navigationOpen={navigationOpen}
                         onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
+                        toolsHide
+                        toolsOpen={false}
                         breadcrumbs={
                             <BreadcrumbGroup
                                 items={[
@@ -339,22 +465,29 @@ export default function Dashboard() {
                         navigation={
                             <SideNavigation
                                 header={{ href: "/dashboard", text: "Portfolio" }}
+                                onFollow={(event) => {
+                                    const href = event.detail.href;
+                                    if (href === "#skills") {
+                                        event.preventDefault();
+                                        scrollToSkills();
+                                    }
+                                }}
                                 items={[
-                                    { type: "link", text: "Profile", href: "/portfolio" },
+                                    { type: "link", text: "View Profile", href: "/portfolio" },
                                     { type: "link", text: "Projects", href: "/profile/manage?type=project" },
                                     { type: "link", text: "Experiences", href: "/profile/manage?type=job" },
                                     { type: "link", text: "Affiliations", href: "/profile/manage?type=affiliation" },
-                                    { type: "link", text: "Skills", href: "/dashboard" },
+                                    { type: "link", text: "Skills", href: "#skills" },
                                 ]}
                             />
                         }
 
                         content={
-                            <div className="dash-page">
+                            <div className="dash-page" ref={topRef}>
                                 <ContentLayout
                                     header={
                                         <div className="dashboard-header">
-                                                <div className="dashboard-headerLeft">
+                                            <div className="dashboard-headerLeft">
                                                 <Header variant="h1">
                                                     Welcome back, {displayName}!
                                                 </Header>
@@ -381,13 +514,31 @@ export default function Dashboard() {
                                                             <div className="dash-profileNameRow">
                                                                 <Box fontWeight="bold" fontSize="heading-m">
                                                                     @{displayName}
-                                                                </Box>
+                                                                </Box>                                                                
                                                                 <StatusIndicator type="success">Active</StatusIndicator>
                                                             </div>
 
-                                                            <Box color="text-body-secondary" margin={{ top: "xxs" }}>
-                                                                Privacy: {profileLoading ? "Loading..." : privacy}
-                                                            </Box>
+                                                            <div className="dash-privacyText">
+                                                                <Box color="text-body-secondary" margin={{ top: "xxs" }}>
+                                                                    Privacy: {profileLoading ? "Loading..." : privacy}
+                                                                </Box>
+                                                            </div>
+
+                                                            <div className="dash-followCounts">
+                                                                <span className="dash-followPill">
+                                                                    <span className="dash-followNum">
+                                                                        {followCountsLoading ? "—" : followCounts.followers}
+                                                                    </span>
+                                                                    <span className="dash-followLabel">Followers</span>
+                                                                </span>
+
+                                                                <span className="dash-followPill">
+                                                                    <span className="dash-followNum">
+                                                                        {followCountsLoading ? "—" : followCounts.following}
+                                                                    </span>
+                                                                    <span className="dash-followLabel">Following</span>
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -425,6 +576,22 @@ export default function Dashboard() {
                                                 {/* BIO */}
                                                 <Box margin={{ top: "s" }} color="text-body-secondary">
                                                     {profileLoading ? "Loading bio..." : `Bio: ${bio}`}
+                                                </Box>
+
+                                                {/* RESUME */}
+                                                <Box margin={{ top: "s" }} color="text-body-secondary">
+                                                    {profileLoading ? (
+                                                        "Loading resume..."
+                                                    ) : profile.resume_url ? (
+                                                        <>
+                                                            Resume:{" "}
+                                                            <a className="resume-link" href={toAbsoluteUrl(profile.resume_url)} target="_blank" rel="noreferrer">
+                                                                View PDF
+                                                            </a>
+                                                        </>
+                                                    ) : (
+                                                        "Resume: Upload a resume for others to see."
+                                                    )}
                                                 </Box>
 
                                                 {/* STAT TILES */}
@@ -465,6 +632,8 @@ export default function Dashboard() {
                                                 { colspan: { default: 12, l: 6 } },
                                                 { colspan: { default: 12, l: 6 } },
                                                 { colspan: { default: 12, l: 6 } },
+                                                { colspan: { default: 12, l: 6 } },
+                                                { colspan: { default: 12, l: 6 } },
                                             ]}
                                         >
                                             {/* PROJECTS */}
@@ -480,9 +649,7 @@ export default function Dashboard() {
                                                 }
                                             >
                                                 <SpaceBetween size="s">
-                                                    <Box color="text-body-secondary">
-                                                        Pin your best projects so recruiters see them first.
-                                                    </Box>
+                                                    <Box color="text-body-secondary">Pin your best projects so recruiters see them first.</Box>
                                                     <div className="dash-list">
                                                         {entriesLoading ? (
                                                             <Box color="text-body-secondary">Loading projects...</Box>
@@ -519,10 +686,7 @@ export default function Dashboard() {
                                                 }
                                             >
                                                 <SpaceBetween size="s">
-                                                    <Box color="text-body-secondary">
-                                                        Internships, roles, research, leadership, or
-                                                        key coursework.
-                                                    </Box>
+                                                    <Box color="text-body-secondary">Internships, roles, research, leadership, or key coursework.</Box>
                                                     <div className="dash-list">
                                                         {entriesLoading ? (
                                                             <Box color="text-body-secondary">Loading experience...</Box>
@@ -554,6 +718,47 @@ export default function Dashboard() {
                                                 </SpaceBetween>
                                             </Container>
 
+                                            {/* EDUCATION */}
+                                            <Container
+                                                header={
+                                                    <Header
+                                                        actions={
+                                                            <Button onClick={() => navigate("/profile/manage?type=education")}>Manage</Button>
+                                                        }
+                                                    >
+                                                        Education
+                                                    </Header>
+                                                }
+                                            >
+                                                <SpaceBetween size="s">
+                                                    <Box color="text-body-secondary">
+                                                        Academic background, including degrees, majors, and schools.
+                                                    </Box>
+                                                    <div className="dash-list">
+                                                        {entriesLoading ? (
+                                                            <Box color="text-body-secondary">Loading education...</Box>
+                                                        ) : educations.length === 0 ? (
+                                                            <Box color="text-body-secondary">No education details yet.</Box>
+                                                        ) : (
+                                                            educations.slice(0, 3).map((ed) => (
+                                                                <div key={ed.id} className="dash-rowItem">
+                                                                    <div>
+                                                                        <Box fontWeight="bold">{ed.title}</Box>
+                                                                        <Box color="text-body-secondary">
+                                                                            {ed.organization || ""}
+                                                                            {ed.start_date ? ` • ${fmtDate(ed.start_date)}${ed.is_current ? " – Present" : ed.end_date ? ` – ${fmtDate(ed.end_date)}` : ""}` : ""}
+                                                                        </Box>
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                    <Button iconName="add-plus" onClick={() => navigate("/profile/manage?type=education&add=1")}>
+                                                        Add education
+                                                    </Button>
+                                                </SpaceBetween>
+                                            </Container>
+
                                             {/* AFFILIATIONS */}
                                             <Container
                                                 header={
@@ -567,10 +772,7 @@ export default function Dashboard() {
                                                 }
                                             >
                                                 <SpaceBetween size="s">
-                                                    <Box color="text-body-secondary">
-                                                        Clubs, orgs, programs, volunteering,
-                                                        certifications-in-progress.
-                                                    </Box>
+                                                    <Box color="text-body-secondary">Clubs, orgs, programs, volunteering, certifications-in-progress.</Box>
 
                                                     <div className="dash-list">
                                                         {entriesLoading ? (
@@ -580,7 +782,7 @@ export default function Dashboard() {
                                                         ) : (
                                                             affiliations.slice(0, 5).map((a) => (
                                                                 <div key={a.id} className="dash-rowItem">
-                                                                    <Box fontWeight="bold">• {a.title}</Box>
+                                                                    <Box fontWeight="bold">• {a.title} || {a.organization}</Box>
                                                                 </div>
                                                             ))
                                                         )}
@@ -592,6 +794,7 @@ export default function Dashboard() {
                                             </Container>
 
                                             {/* SKILLS */}
+                                            <div id="skills" ref={skillsRef} />
                                             <Container
                                                 header={
                                                     <Header
@@ -666,6 +869,7 @@ export default function Dashboard() {
                                                                             bio: profile.bio,
                                                                             privacy: profile.privacy,
                                                                             industry_id: profile.industryId,
+                                                                            resume_url: profile.resume_url || null,
                                                                             title: profile.title,
                                                                             city: profile.city,
                                                                             state: profile.state,
@@ -691,79 +895,168 @@ export default function Dashboard() {
                                                 </Box>
                                             }
                                         >
-                                            <Form>
-                                                <SpaceBetween size="m">
-                                                    <FormField label="Industry">
-                                                        <Select
-                                                            statusType={industriesLoading ? "loading" : "finished"}
-                                                            placeholder="Select an industry"
-                                                            selectedOption={selectedIndustryOption}
-                                                            options={industries.map((i) => ({
-                                                                label: i.name,
-                                                                value: String(i.id),
-                                                            }))}
-                                                            onChange={({ detail }) => {
-                                                                const opt = detail.selectedOption;
-                                                                setProfile((p) => ({
-                                                                    ...p,
-                                                                    industryId: opt?.value ? Number(opt.value) : null,
-                                                                    industryName: opt?.label || "",
-                                                                }));
-                                                            }}
-                                                            empty="No industries found."
-                                                        />
-                                                    </FormField>
+                                            <div className="profile-edit-form">
+                                                <Form>
+                                                    <SpaceBetween size="m">
+                                                        <FormField label="Industry">
+                                                            <Select
+                                                                statusType={industriesLoading ? "loading" : "finished"}
+                                                                placeholder="Select an industry"
+                                                                selectedOption={selectedIndustryOption}
+                                                                options={industries.map((i) => ({
+                                                                    label: i.name,
+                                                                    value: String(i.id),
+                                                                }))}
+                                                                onChange={({ detail }) => {
+                                                                    const opt = detail.selectedOption;
+                                                                    setProfile((p) => ({
+                                                                        ...p,
+                                                                        industryId: opt?.value ? Number(opt.value) : null,
+                                                                        industryName: opt?.label || "",
+                                                                    }));
+                                                                }}
+                                                                empty="No industries found."
+                                                            />
+                                                        </FormField>
 
-                                                    <FormField label="Title">
-                                                        <Input
-                                                            value={profile.title}
-                                                            onChange={(e) =>
-                                                                setProfile((p) => ({
-                                                                    ...p,
-                                                                    title: e.detail.value,
-                                                                }))
-                                                            }
-                                                        />
-                                                    </FormField>
-                                                    
-                                                    <FormField label="City">
-                                                        <Input
-                                                            value={profile.city}
-                                                            onChange={(e) => setProfile((p) => ({ ...p, city: e.detail.value }))}
-                                                            placeholder="e.g., Newark"
-                                                        />
-                                                    </FormField>
+                                                        <FormField label="Title">
+                                                            <Input
+                                                                value={profile.title}
+                                                                onChange={(e) =>
+                                                                    setProfile((p) => ({
+                                                                        ...p,
+                                                                        title: e.detail.value,
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </FormField>
+                                                        
+                                                        <FormField label="City">
+                                                            <Input
+                                                                value={profile.city}
+                                                                onChange={(e) => setProfile((p) => ({ ...p, city: e.detail.value }))}
+                                                                placeholder="e.g., Newark"
+                                                            />
+                                                        </FormField>
 
-                                                    <FormField label="State / Region">
-                                                        <Input
-                                                            value={profile.state}
-                                                            onChange={(e) => setProfile((p) => ({ ...p, state: e.detail.value }))}
-                                                            placeholder="e.g., NJ"
-                                                        />
-                                                    </FormField>
+                                                        <FormField label="State / Region">
+                                                            <Input
+                                                                value={profile.state}
+                                                                onChange={(e) => setProfile((p) => ({ ...p, state: e.detail.value }))}
+                                                                placeholder="e.g., NJ"
+                                                            />
+                                                        </FormField>
 
-                                                    <FormField label="Country">
-                                                        <Input
-                                                            value={profile.country}
-                                                            onChange={(e) => setProfile((p) => ({ ...p, country: e.detail.value }))}
-                                                            placeholder="e.g., USA"
-                                                        />
-                                                    </FormField>
+                                                        <FormField label="Country">
+                                                            <Input
+                                                                value={profile.country}
+                                                                onChange={(e) => setProfile((p) => ({ ...p, country: e.detail.value }))}
+                                                                placeholder="e.g., USA"
+                                                            />
+                                                        </FormField>
 
-                                                    <FormField label="Bio">
-                                                        <Textarea
-                                                            value={profile.bio}
-                                                            onChange={(e) =>
-                                                                setProfile((p) => ({
-                                                                    ...p,
-                                                                    bio: e.detail.value,
-                                                                }))
-                                                            }
-                                                            rows={4}
-                                                        />
-                                                    </FormField>
-                                                </SpaceBetween>
-                                            </Form>
+                                                        <FormField label="Bio">
+                                                            <Textarea
+                                                                value={profile.bio}
+                                                                onChange={(e) =>
+                                                                    setProfile((p) => ({ ...p, bio: e.detail.value }))
+                                                                }
+                                                                rows={4}
+                                                            />
+                                                        </FormField>
+
+                                                        <FormField label="Resume (PDF only)">
+                                                            <SpaceBetween size="s">
+                                                                {profile.resume_url ? (
+                                                                    <Box color="text-body-secondary">
+                                                                        Current:{" "}
+                                                                        <a href={toAbsoluteUrl(profile.resume_url)} target="_blank" rel="noreferrer">
+                                                                            View PDF
+                                                                        </a>
+                                                                    </Box>
+                                                                ) : (
+                                                                    <Box color="text-body-secondary">No resume uploaded yet.</Box>
+                                                                )}
+
+                                                                <div className="resume-row">
+                                                                    <div className="resume-fileInput">
+                                                                        <FileInput
+                                                                            accept=".pdf,application/pdf"
+                                                                            value={resumeFiles}
+                                                                            onChange={({ detail }) => {
+                                                                                const nextFiles = detail.value || [];
+                                                                                const first = nextFiles[0];
+
+                                                                                if (!first) {
+                                                                                    setResumeFiles([]);
+                                                                                    setResumeMsg(null);
+                                                                                    return;
+                                                                                }
+
+                                                                                const err = validatePdfFile(first);
+                                                                                if (err) {
+                                                                                    setResumeFiles([]);
+                                                                                    setResumeMsg({ type: "error", text: err });
+                                                                                    return;
+                                                                                }
+
+                                                                                setResumeFiles([first]);
+                                                                                setResumeMsg(null);
+                                                                            }}
+                                                                            i18nStrings={{
+                                                                                uploadButtonText: (e) => (e ? "Choose files" : "Choose file"),
+                                                                                dropzoneText: (e) => (e ? "Drop files to upload" : "Drop file to upload"),
+                                                                                removeFileAriaLabel: () => "Remove file",
+                                                                                errorIconAriaLabel: "Error",
+                                                                            }}
+                                                                        />
+                                                                    </div>
+
+                                                                    <div className="resume-actions">
+                                                                        <Button
+                                                                            variant="primary"
+                                                                            loading={resumeBusy}
+                                                                            disabled={!resumeFiles?.length}
+                                                                            onClick={uploadResume}
+                                                                        >
+                                                                            Upload PDF
+                                                                        </Button>
+
+                                                                        <Button
+                                                                            variant="link"
+                                                                            disabled={resumeBusy}
+                                                                            onClick={() => {
+                                                                                setResumeFiles([]);
+                                                                                setResumeMsg(null);
+                                                                            }}
+                                                                        >
+                                                                            Clear
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+
+
+                                                                <Table
+                                                                    columnDefinitions={[
+                                                                        { id: "name", header: "File name", cell: (f) => f.name },
+                                                                        { id: "size", header: "File size", cell: (f) => `${Math.round(f.size / 1024)} KB` },
+                                                                        { id: "type", header: "Type", cell: (f) => f.type || "—" },
+                                                                    ]}
+                                                                    items={resumeFiles}
+                                                                    empty="No file selected"
+                                                                />
+
+                                                                {resumeMsg ? (
+                                                                    <StatusIndicator type={resumeMsg.type === "success" ? "success" : "error"}>
+                                                                            {resumeMsg.text}
+                                                                    </StatusIndicator>
+                                                                ) : null}
+                                                            </SpaceBetween>
+                                                        </FormField>
+
+                                                    </SpaceBetween>
+                                                </Form>
+                                            </div>
                                         </Modal>
 
                                         <Modal

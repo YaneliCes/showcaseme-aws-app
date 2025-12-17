@@ -56,6 +56,42 @@ export default function Portfolio() {
         }
     };
 
+    const renderDetails = (details) => {
+        const raw = String(details || "").trim();
+        if (!raw) return null;
+
+        // Split into lines, and treat lines that start with "-", "•", "*"
+        // as bullet items. If there are multiple lines, show a list.
+        const lines = raw
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter(Boolean);
+
+        const hasMultipleLines = lines.length > 1;
+
+        const items = lines.map((l) => l.replace(/^[-•*]\s*/, ""));
+
+        if (hasMultipleLines) {
+            return (
+                <ul className="profile-detailsList">
+                    {items.map((t, idx) => (
+                        <li key={idx} className="profile-detailsItem">
+                            {t}
+                        </li>
+                    ))}
+                </ul>
+            );
+        }
+
+        // single-line details: render as a subtle bullet line
+        return (
+            <div className="profile-detailsOneLine">
+                <span className="profile-detailsDot">•</span>
+                <span className="profile-detailsText">{items[0]}</span>
+            </div>
+        );
+    };
+
     const location = useMemo(() => {
         return [profile.city, profile.state, profile.country]
             .filter(Boolean)
@@ -268,78 +304,115 @@ export default function Portfolio() {
                     }
                     content={
                         <div className="profile-page">
-                            <ContentLayout
-                                header={
-                                    <Header
-                                        variant="h1"
-                                        description="Portfolio view"
-                                        actions={
-                                            <SpaceBetween direction="horizontal" size="xs">
-                                                <Button variant="link" onClick={goBackToFeed}>
-                                                    ← Back to previous page
-                                                </Button>
-                                            </SpaceBetween>
-                                        }
-                                    >
-                                        @{profile.username}
-                                    </Header>
-                                }
-                            >
-                                <SpaceBetween size="l">
-                                    {/* HEADER CARD */}
-                                    <Container>
-                                        <div className="profile-headerCard">
-                                            <div className="profile-headerLeft">
-                                                <div className="profile-avatar">
-                                                    {avatarLetter}
-                                                </div>
+                            <div className="profile-shell">
+                                <ContentLayout
+                                    header={
+                                        <Header
+                                            variant="h1"
+                                            description="Portfolio view"
+                                            actions={
+                                                <SpaceBetween direction="horizontal" size="xs">
+                                                    <Button variant="link" onClick={goBackToFeed}>
+                                                        ← Back to previous page
+                                                    </Button>
+                                                </SpaceBetween>
+                                            }
+                                        >
+                                            @{profile.username}
+                                        </Header>
+                                    }
+                                >
+                                    <SpaceBetween size="l">
+                                        {/* HEADER CARD */}
+                                        <Container>
+                                            <div className="profile-headerCard">
+                                                <div className="profile-headerLeft">
+                                                    <div className="profile-avatar">
+                                                        {avatarLetter}
+                                                    </div>
 
-                                                <div className="profile-identity">
-                                                    <Box
-                                                        fontWeight="bold"
-                                                        fontSize="heading-m"
-                                                    >
-                                                        {profile.title?.trim()
-                                                            ? profile.title
-                                                            : "Portfolio"}
-                                                    </Box>
-
-                                                    <Box
-                                                        color="text-body-secondary"
-                                                        margin={{ top: "xxs" }}
-                                                    >
-                                                        {profile.industryName?.trim()
-                                                            ? profile.industryName
-                                                            : "Industry not set"}
-                                                        {location ? ` • ${location}` : ""}
-                                                    </Box>
-
-                                                    <Box margin={{ top: "xs" }}>
-                                                        <StatusIndicator
-                                                            type={
-                                                                profile.privacy === "private"
-                                                                    ? "stopped"
-                                                                    : "success"
-                                                            }
+                                                    <div className="profile-identity">
+                                                        <Box
+                                                            fontWeight="bold"
+                                                            fontSize="heading-m"
                                                         >
-                                                            {privacyLabel}
-                                                        </StatusIndicator>
-                                                    </Box>
+                                                            {profile.title?.trim()
+                                                                ? profile.title
+                                                                : "Portfolio"}
+                                                        </Box>
 
-                                                    <Box margin={{ top: "s" }}>
-                                                        <SpaceBetween direction="horizontal" size="m">
-                                                            <Box>
-                                                                <Box fontWeight="bold">{followMeta.counts.followers}</Box>
-                                                                <Box color="text-body-secondary" fontSize="body-s">Followers</Box>
-                                                            </Box>
+                                                        <Box
+                                                            color="text-body-secondary"
+                                                            margin={{ top: "xxs" }}
+                                                        >
+                                                            {profile.industryName?.trim()
+                                                                ? profile.industryName
+                                                                : "Industry not set"}
+                                                            {location ? ` • ${location}` : ""}
+                                                        </Box>
 
-                                                            <Box>
-                                                                <Box fontWeight="bold">{followMeta.counts.following}</Box>
-                                                                <Box color="text-body-secondary" fontSize="body-s">Following</Box>
-                                                            </Box>
+                                                        <Box margin={{ top: "xs" }}>
+                                                            <StatusIndicator
+                                                                type={
+                                                                    profile.privacy === "private"
+                                                                        ? "stopped"
+                                                                        : "success"
+                                                                }
+                                                            >
+                                                                {privacyLabel}
+                                                            </StatusIndicator>
+                                                        </Box>
+
+                                                        {/* <Box margin={{ top: "s" }}>
+                                                            <SpaceBetween direction="horizontal" size="m">
+                                                                <Box>
+                                                                    <Box fontWeight="bold">{followMeta.counts.followers}</Box>
+                                                                    <Box color="text-body-secondary" fontSize="body-s">Followers</Box>
+                                                                </Box>
+
+                                                                <Box>
+                                                                    <Box fontWeight="bold">{followMeta.counts.following}</Box>
+                                                                    <Box color="text-body-secondary" fontSize="body-s">Following</Box>
+                                                                </Box>
+
+                                                                {!isSelf ? (
+                                                                    <div className="profile-followRow">
+                                                                        <Button
+                                                                            variant={followMeta.following ? "normal" : "primary"}
+                                                                            loading={followLoading}
+                                                                            onClick={handleFollowToggle}
+                                                                        >
+                                                                            {followMeta.following ? "Following" : "Follow"}
+                                                                        </Button>
+
+                                                                        {followMeta.connection ? (
+                                                                            <div className="profile-followStatus">
+                                                                                <StatusIndicator type="success">Connected</StatusIndicator>
+                                                                            </div>
+                                                                        ) : followMeta.followedBy ? (
+                                                                            <div className="profile-followStatus">
+                                                                                <StatusIndicator type="info">Follows you</StatusIndicator>
+                                                                            </div>
+                                                                        ) : null}
+                                                                    </div>
+                                                                ) : null}
+                                                            </SpaceBetween>
+                                                        </Box> */}
+                                                        <div className="profile-metaRow">
+                                                            <div className="profile-stats">
+                                                                <div className="profile-statPill">
+                                                                    <div className="profile-statNum">{followMeta.counts.followers}</div>
+                                                                    <div className="profile-statLabel">Followers</div>
+                                                                </div>
+
+                                                                <div className="profile-statPill">
+                                                                    <div className="profile-statNum">{followMeta.counts.following}</div>
+                                                                    <div className="profile-statLabel">Following</div>
+                                                                </div>
+                                                            </div>
 
                                                             {!isSelf ? (
-                                                                <div className="profile-followRow">
+                                                                <div className="profile-actions">
                                                                     <Button
                                                                         variant={followMeta.following ? "normal" : "primary"}
                                                                         loading={followLoading}
@@ -348,215 +421,239 @@ export default function Portfolio() {
                                                                         {followMeta.following ? "Following" : "Follow"}
                                                                     </Button>
 
-                                                                    {followMeta.connection ? (
-                                                                        <div className="profile-followStatus">
-                                                                            <StatusIndicator type="success">Connected</StatusIndicator>
-                                                                        </div>
-                                                                    ) : followMeta.followedBy ? (
-                                                                        <div className="profile-followStatus">
-                                                                            <StatusIndicator type="info">Follows you</StatusIndicator>
-                                                                        </div>
+                                                                    {followMeta.followedBy ? (
+                                                                        <StatusIndicator type="info">Follows you</StatusIndicator>
                                                                     ) : null}
                                                                 </div>
                                                             ) : null}
-                                                        </SpaceBetween>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                                <div className="profile-bio">
+                                                    <Box margin={{ top: "s" }} color="text-body-secondary">
+                                                        Bio: {profile.bio?.trim()
+                                                            ? profile.bio
+                                                            : "This user hasn’t added a bio yet."}
                                                     </Box>
                                                 </div>
                                             </div>
-
-                                            <Box
-                                                margin={{ top: "s" }}
-                                                color="text-body-secondary"
-                                            >
-                                                {profile.bio?.trim()
-                                                    ? profile.bio
-                                                    : "This user hasn’t added a bio yet."}
-                                            </Box>
-                                        </div>
-                                    </Container>
-
-                                    {/* MAIN GRID */}
-                                    <Grid
-                                        gridDefinition={[
-                                            { colspan: { default: 12, l: 6 } },
-                                            { colspan: { default: 12, l: 6 } },
-                                            { colspan: { default: 12, l: 6 } },
-                                            { colspan: { default: 12, l: 6 } }
-                                        ]}
-                                    >
-                                        {/* PROJECTS */}
-                                        <Container
-                                            header={<Header variant="h2">Projects</Header>}
-                                        >
-                                            <SpaceBetween size="s">
-                                                {projects.length === 0 ? (
-                                                    <Box color="text-body-secondary">
-                                                        No projects yet.
-                                                    </Box>
-                                                ) : (
-                                                    projects.slice(0, 6).map((p) => (
-                                                        <div
-                                                            key={p.id}
-                                                            className="profile-itemRow"
-                                                        >
-                                                            <div className="profile-itemText">
-                                                                <Box fontWeight="bold">
-                                                                    {p.title}
-                                                                </Box>
-                                                                <Box color="text-body-secondary">
-                                                                    {p.organization || "Project"}
-                                                                </Box>
-                                                            </div>
-
-                                                            {p.url && (
-                                                                <Badge>
-                                                                    <Link
-                                                                        external
-                                                                        href={p.url}
-                                                                    >
-                                                                        {safeHost(p.url) || "Link"}
-                                                                    </Link>
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </SpaceBetween>
                                         </Container>
 
-                                        {/* EXPERIENCE */}
-                                        <Container
-                                            header={<Header variant="h2">Experience</Header>}
+                                        {/* MAIN GRID */}
+                                        <Grid
+                                            gridDefinition={[
+                                                { colspan: { default: 12, l: 6 } },
+                                                { colspan: { default: 12, l: 6 } },
+                                                { colspan: { default: 12, l: 6 } },
+                                                { colspan: { default: 12, l: 6 } },
+                                                { colspan: { default: 12, l: 6 } }
+                                            ]}
                                         >
-                                            <SpaceBetween size="s">
-                                                {experiences.length === 0 ? (
-                                                    <Box color="text-body-secondary">
-                                                        No experience yet.
-                                                    </Box>
-                                                ) : (
-                                                    experiences.slice(0, 6).map((e) => {
-                                                        const start = e.start_date
-                                                            ? String(e.start_date).slice(0, 10)
-                                                            : "";
-                                                        const end = e.is_current
-                                                            ? "Present"
-                                                            : e.end_date
-                                                            ? String(e.end_date).slice(0, 10)
-                                                            : "";
-                                                        const dates =
-                                                            start || end
-                                                                ? `${start}${
-                                                                      start && end ? " – " : ""
-                                                                  }${end}`
-                                                                : "";
+                                            {/* PROJECTS */}
+                                            <Container header={<Header variant="h2">Projects</Header>}>
+                                                <SpaceBetween size="s">
+                                                    {projects.length === 0 ? (
+                                                        <Box color="text-body-secondary">No projects yet.</Box>
+                                                    ) : (
+                                                        projects.slice(0, 6).map((p) => {
+                                                            const start = p.start_date ? String(p.start_date).slice(0, 10) : "";
+                                                            const end = p.is_current ? "Present" : p.end_date ? String(p.end_date).slice(0, 10) : "";
+                                                            const dates =
+                                                                start || end ? `${start}${ start && end ? " – " : "" }${end}` : "";
 
-                                                        return (
-                                                            <div
-                                                                key={e.id}
-                                                                className="profile-itemRow"
-                                                            >
-                                                                <div className="profile-itemText">
-                                                                    <Box fontWeight="bold">
-                                                                        {e.title}
-                                                                    </Box>
-                                                                    <Box color="text-body-secondary">
-                                                                        {e.organization || ""}
-                                                                        {dates ? ` • ${dates}` : ""}
-                                                                    </Box>
+                                                            return (
+                                                                <div key={p.id} className="profile-itemRow">
+                                                                    <div className="profile-itemText">
+                                                                        <div className="profile-itemTitleRow">
+                                                                            <span className="profile-itemTitle">{p.title}</span>
+                                                                        </div>
+
+                                                                        <div className="profile-itemMeta">
+                                                                            ({p.organization ? (
+                                                                                <span className="profile-itemOrg">{p.organization}</span>
+                                                                            ) : (
+                                                                                <span className="profile-itemOrg">Project</span>
+                                                                            )})
+                                                                            
+                                                                            {dates ? (
+                                                                                <span className="profile-itemDates">{dates}</span>
+                                                                            ) : null}
+                                                                        </div>
+
+                                                                        {renderDetails(p.details)}
+                                                                    </div>
+
+                                                                    {p.url && (
+                                                                        <Badge>
+                                                                            <Link external href={p.url}>
+                                                                                {safeHost(p.url) || "Link"}
+                                                                            </Link>
+                                                                        </Badge>
+                                                                    )}
                                                                 </div>
-                                                            </div>
-                                                        );
-                                                    })
-                                                )}
-                                            </SpaceBetween>
-                                        </Container>
+                                                            );
+                                                        })
+                                                    )}
+                                                </SpaceBetween>
+                                            </Container>
 
-                                        {/* AFFILIATIONS */}
-                                        <Container
-                                            header={<Header variant="h2">Affiliations</Header>}
-                                        >
-                                            <SpaceBetween size="s">
-                                                {affiliations.length === 0 ? (
-                                                    <Box color="text-body-secondary">
-                                                        No affiliations yet.
-                                                    </Box>
-                                                ) : (
-                                                    affiliations.slice(0, 10).map((a) => (
-                                                        <div
-                                                            key={a.id}
-                                                            className="profile-bulletRow"
-                                                        >
-                                                            <Box fontWeight="bold">
-                                                                • {a.title}
-                                                            </Box>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </SpaceBetween>
-                                        </Container>
+                                            {/* EXPERIENCE */}
+                                            <Container header={<Header variant="h2">Experience</Header>}>
+                                                <SpaceBetween size="s">
+                                                    {experiences.length === 0 ? (
+                                                        <Box color="text-body-secondary">No experience yet.</Box>
+                                                    ) : (
+                                                        experiences.slice(0, 6).map((e) => {
+                                                            const start = e.start_date ? String(e.start_date).slice(0, 10) : "";
+                                                            const end = e.is_current ? "Present" : e.end_date ? String(e.end_date).slice(0, 10) : "";
+                                                            const dates =
+                                                                start || end ? `${start}${ start && end ? " – " : "" }${end}` : "";
 
-                                        {/* SKILLS */}
-                                        <Container
-                                            header={<Header variant="h2">Skills</Header>}
-                                        >
-                                            <Tabs
-                                                tabs={[
-                                                    {
-                                                        id: "hard",
-                                                        label: `Hard skills (${hardSkills.length})`,
-                                                        content: (
-                                                            <div className="profile-pillWrap">
-                                                                {hardSkills.length === 0 ? (
-                                                                    <Box color="text-body-secondary">
-                                                                        No hard skills yet.
-                                                                    </Box>
-                                                                ) : (
-                                                                    hardSkills.map((s) => (
-                                                                        <span
-                                                                            key={s.id}
-                                                                            className="profile-pill"
-                                                                        >
-                                                                            {s.name}
-                                                                        </span>
-                                                                    ))
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    },
-                                                    {
-                                                        id: "soft",
-                                                        label: `Soft skills (${softSkills.length})`,
-                                                        content: (
-                                                            <div className="profile-pillWrap">
-                                                                {softSkills.length === 0 ? (
-                                                                    <Box color="text-body-secondary">
-                                                                        No soft skills yet.
-                                                                    </Box>
-                                                                ) : (
-                                                                    softSkills.map((s) => (
-                                                                        <span
-                                                                            key={s.id}
-                                                                            className="profile-pill"
-                                                                        >
-                                                                            {s.name}
-                                                                        </span>
-                                                                    ))
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    }
-                                                ]}
-                                            />
-                                        </Container>
-                                    </Grid>
+                                                            return (
+                                                                <div key={e.id} className="profile-itemRow">
+                                                                    <div className="profile-itemText">
+                                                                        <div className="profile-itemTitleRow">
+                                                                            <span className="profile-itemTitle">{e.title}</span>
+                                                                        </div>
 
-                                    {viewer && (
-                                        <Box color="text-body-secondary" fontSize="body-s">
-                                            Viewing as: @{viewer.username}
-                                        </Box>
-                                    )}
-                                </SpaceBetween>
-                            </ContentLayout>
+                                                                        <div className="profile-itemMeta">
+                                                                            ({e.organization ? (
+                                                                                <span className="profile-itemOrg">{e.organization}</span>
+                                                                            ) : null})
+
+                                                                            {dates ? (
+                                                                                <span className="profile-itemDates">{dates}</span>
+                                                                            ) : null}
+                                                                        </div>
+
+                                                                        {renderDetails(e.details)}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </SpaceBetween>
+                                            </Container>
+
+                                            {/* EDUCATION */}
+                                            <Container header={<Header variant="h2">Education</Header>}>
+                                                <SpaceBetween size="s">
+                                                    {education.length === 0 ? (
+                                                        <Box color="text-body-secondary">No education yet.</Box>
+                                                    ) : (
+                                                        education.slice(0, 6).map((ed) => {
+                                                            const start = ed.start_date ? String(ed.start_date).slice(0, 10) : "";
+                                                            const end = ed.is_current ? "Present" : ed.end_date ? String(ed.end_date).slice(0, 10) : "";
+                                                            const dates =
+                                                                start || end ? `${start}${ start && end ? " – " : "" }${end}` : "";
+
+                                                            return (
+                                                                <div key={ed.id} className="profile-itemRow">
+                                                                    <div className="profile-itemText">
+                                                                        <div className="profile-itemTitleRow">
+                                                                            <span className="profile-itemTitle">{ed.title}</span>
+                                                                        </div>
+
+                                                                        <div className="profile-itemMeta">
+                                                                            ({ed.organization ? (
+                                                                                <span className="profile-itemOrg">{ed.organization}</span>
+                                                                            ) : null})
+
+                                                                            {dates ? (
+                                                                                <span className="profile-itemDates">{dates}</span>
+                                                                            ) : null}
+                                                                        </div>
+
+                                                                        {renderDetails(ed.details)}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </SpaceBetween>
+                                            </Container>
+
+                                            {/* AFFILIATIONS */}
+                                            <Container header={<Header variant="h2">Affiliations</Header>}>
+                                                <SpaceBetween size="s">
+                                                    {affiliations.length === 0 ? (
+                                                        <Box color="text-body-secondary">No affiliations yet.</Box>
+                                                    ) : (
+                                                        affiliations.slice(0, 10).map((a) => (
+                                                            <div
+                                                                key={a.id}
+                                                                className="profile-bulletRow"
+                                                            >
+                                                                <Box fontWeight="bold">
+                                                                    • {a.title} || {a.organization}
+                                                                </Box>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </SpaceBetween>
+                                            </Container>
+
+                                            {/* SKILLS */}
+                                            <Container header={<Header variant="h2">Skills</Header>}>
+                                                <Tabs
+                                                    tabs={[
+                                                        {
+                                                            id: "hard",
+                                                            label: `Hard skills (${hardSkills.length})`,
+                                                            content: (
+                                                                <div className="profile-pillWrap">
+                                                                    {hardSkills.length === 0 ? (
+                                                                        <Box color="text-body-secondary">No hard skills yet.</Box>
+                                                                    ) : (
+                                                                        hardSkills.map((s) => (
+                                                                            <span
+                                                                                key={s.id}
+                                                                                className="profile-pill"
+                                                                            >
+                                                                                {s.name}
+                                                                            </span>
+                                                                        ))
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        },
+                                                        {
+                                                            id: "soft",
+                                                            label: `Soft skills (${softSkills.length})`,
+                                                            content: (
+                                                                <div className="profile-pillWrap">
+                                                                    {softSkills.length === 0 ? (
+                                                                        <Box color="text-body-secondary">
+                                                                            No soft skills yet.
+                                                                        </Box>
+                                                                    ) : (
+                                                                        softSkills.map((s) => (
+                                                                            <span
+                                                                                key={s.id}
+                                                                                className="profile-pill"
+                                                                            >
+                                                                                {s.name}
+                                                                            </span>
+                                                                        ))
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        }
+                                                    ]}
+                                                />
+                                            </Container>
+                                        </Grid>
+
+                                        {viewer && (
+                                            <Box color="text-body-secondary" fontSize="body-s">
+                                                Viewing as: @{viewer.username}
+                                            </Box>
+                                        )}
+                                    </SpaceBetween>
+                                </ContentLayout>
+                            </div>
                         </div>
                     }
                 />

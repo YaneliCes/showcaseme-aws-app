@@ -149,13 +149,7 @@ export default function Feed() {
                                     ) : filtered.length === 0 ? (
                                         <Box color="text-body-secondary">No portfolios found.</Box>
                                     ) : (
-                                        <Grid
-                                            gridDefinition={[
-                                                { colspan: { default: 12, s: 6, l: 4 } },
-                                                { colspan: { default: 12, s: 6, l: 4 } },
-                                                { colspan: { default: 12, s: 6, l: 4 } },
-                                            ]}
-                                        >
+                                        <div className="feed-grid">
                                             {filtered.map((u) => {
                                                 const location = makeLocation(u) || "—";
                                                 const industry = safeText(u.industry_name) || "—";
@@ -246,12 +240,12 @@ export default function Feed() {
 
                                                                         <div className="feed-stat">
                                                                             <div className="feed-statValue">{u.hardSkills ?? 0}</div>
-                                                                            <div className="feed-statLabel">Hard</div>
+                                                                            <div className="feed-statLabel">Hard Skills</div>
                                                                         </div>
 
                                                                         <div className="feed-stat">
                                                                             <div className="feed-statValue">{u.softSkills ?? 0}</div>
-                                                                            <div className="feed-statLabel">Soft</div>
+                                                                            <div className="feed-statLabel">Soft Skills</div>
                                                                         </div>
                                                                     </div>
                                                                 </>
@@ -306,41 +300,61 @@ export default function Feed() {
 
                                                             <Box margin={{ top: "s" }}>
                                                                 {canView ? (
-                                                                    <Button
-                                                                        variant="primary"
-                                                                        onClick={(e) => {
+                                                                    <div className="feed-actionsRow">
+                                                                        <Button
+                                                                            variant="primary"
+                                                                            onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             navigate(`/portfolio/${encodeURIComponent(u.username)}`);
-                                                                        }}
-                                                                    >
-                                                                        View portfolio
-                                                                    </Button>
-                                                                ) : (
-                                                                    <SpaceBetween direction="horizontal" size="xs">
+                                                                            }}
+                                                                        >
+                                                                            View portfolio
+                                                                        </Button>
+
                                                                         <Button
-                                                                            variant={isFollowing ? "normal" : "primary"}
+                                                                            className={isFollowing ? "feed-followBtnFollowing" : "feed-followBtn"}
                                                                             loading={!!followBusy[u.username]}
                                                                             onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                toggleFollow(u.username, isFollowing);
+                                                                            e.stopPropagation();
+                                                                            toggleFollow(u.username, isFollowing);
                                                                             }}
                                                                         >
                                                                             {isFollowing ? "Following" : "Follow"}
                                                                         </Button>
 
                                                                         {isConnected ? (
-                                                                            <StatusIndicator type="success">Connected</StatusIndicator>
+                                                                            ""
+                                                                        ) : followedBy ? (
+                                                                            <StatusIndicator type="info">Follows you</StatusIndicator>
+                                                                        ) : null}
+                                                                    </div>
+                                                                ) : (
+                                                                    <SpaceBetween direction="horizontal" size="xs">
+                                                                        <Button
+                                                                            variant={isFollowing ? "normal" : "primary"}
+                                                                            loading={!!followBusy[u.username]}
+                                                                            onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            toggleFollow(u.username, isFollowing);
+                                                                            }}
+                                                                        >
+                                                                            {isFollowing ? "Following" : "Follow"}
+                                                                        </Button>
+
+                                                                        {isConnected ? (
+                                                                            ""
                                                                         ) : followedBy ? (
                                                                             <StatusIndicator type="info">Follows you</StatusIndicator>
                                                                         ) : null}
                                                                     </SpaceBetween>
                                                                 )}
                                                             </Box>
+
                                                         </div>
                                                     </Container>
                                                 );
                                             })}
-                                        </Grid>
+                                        </div>
                                     )}
                                 </SpaceBetween>
                             </ContentLayout>
