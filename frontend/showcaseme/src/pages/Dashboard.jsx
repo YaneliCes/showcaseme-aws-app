@@ -108,6 +108,14 @@ export default function Dashboard() {
         }
     };
 
+    const fmtDate = (d) => {
+        if (!d) return "";
+        // Fixes data from "2025-12-10T05:00:00.000Z" to "2025-12-10"
+        if (typeof d === "string") return d.slice(0, 10);
+        return new Date(d).toISOString().slice(0, 10);
+    };
+
+
     // When the page loads, apply light/dark mode
     useEffect(() => {
         const next = colorMode === "dark" ? Mode.Dark : Mode.Light;
@@ -352,11 +360,11 @@ export default function Dashboard() {
                                                 </Header>
                                             </div>
 
-                                            <div className="dashboard-headerRight">
+                                            {/* <div className="dashboard-headerRight">
                                                 <Button variant="normal" onClick={() => setColorMode((m) => (m === "dark" ? "light" : "dark"))}>
                                                     {colorMode === "dark" ? "Light mode" : "Dark mode"}
                                                 </Button>
-                                            </div>
+                                            </div> */}
                                         </div>
                                     }
                                 >
@@ -525,11 +533,15 @@ export default function Dashboard() {
                                                                 <div key={e.id} className="dash-rowItem">
                                                                     <div>
                                                                         <Box fontWeight="bold">{e.title}</Box>
-                                                                        <Box color="text-body-secondary">
+                                                                        {/* <Box color="text-body-secondary">
                                                                             {e.organization || ""}
                                                                             {e.start_date
                                                                                 ? ` • ${e.start_date}${e.is_current ? " – Present" : e.end_date ? ` – ${e.end_date}` : ""}`
                                                                                 : ""}
+                                                                        </Box> */}
+                                                                        <Box color="text-body-secondary">
+                                                                            {e.organization || ""}
+                                                                            {e.start_date ? ` • ${fmtDate(e.start_date)}${e.is_current ? " – Present" : e.end_date ? ` – ${fmtDate(e.end_date)}` : ""}` : ""}
                                                                         </Box>
                                                                     </div>
                                                                 </div>

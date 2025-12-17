@@ -8,14 +8,17 @@ const entriesRouter = require("./routes/entries");
 const skillsRouter = require("./routes/skills");
 const feedRouter = require("./routes/feed");
 const publicPortfolioRouter = require("./routes/publicPortfolio");
+const followRouter = require("./routes/follow");
+const networkRouter = require("./routes/network");
+const settingsRouter = require("./routes/settings");
 
 dotenv.config();
 
 const app = express();
 
 app.set("json replacer", (key, value) => {
-  if (typeof value === "bigint") return Number(value);
-  return value;
+    if (typeof value === "bigint") return Number(value);
+    return value;
 });
 
 const PORT = process.env.APP_PORT || 3000;
@@ -64,6 +67,14 @@ app.use("/api/profile/skills", skillsRouter);
 app.use("/api/feed", feedRouter);
 app.use("/api/public/portfolio", publicPortfolioRouter);
 
+// Follower/Following route
+app.use("/api/follow", followRouter);
+
+// Connection network route
+app.use("/api/network", networkRouter);
+
+// Settings route
+app.use("/api/settings", settingsRouter);
 
 // Health check
 app.get("/healthz", (req, res) => res.send("OK"));

@@ -38,6 +38,14 @@ export default function Portfolio() {
     const [hardSkills, setHardSkills] = useState([]);
     const [softSkills, setSoftSkills] = useState([]);
 
+    const [followLoading, setFollowLoading] = useState(false);
+    const [followMeta, setFollowMeta] = useState({
+        following: false,
+        followedBy: false,
+        connection: false,
+        counts: { followers: 0, following: 0 }
+    });
+
     const safeHost = (url) => {
         try {
             if (!url) return "";
@@ -67,12 +75,59 @@ export default function Portfolio() {
         navigate("/feed");
     };
 
+    const loadFollowMeta = async (targetUsername) => {
+        if (!targetUsername) return;
+
+        try {
+            const res = await fetch(`/api/follow/${encodeURIComponent(targetUsername)}`, {
+                credentials: "include",
+            });
+            const json = await res.json().catch(() => ({}));
+            if (res.ok && json.status === "success") {
+                setFollowMeta(json.meta);
+            }
+        } catch (err) {
+            console.error("loadFollowMeta error:", err);
+        }
+    };
+
+    const isSelf = viewer?.username && profile?.username
+        ? viewer.username.toLowerCase() === profile.username.toLowerCase()
+        : false;
+
+    const handleFollowToggle = async () => {
+        if (!profile?.username || isSelf) return;
+
+        setFollowLoading(true);
+        try {
+            const method = followMeta.following ? "DELETE" : "POST";
+
+            const res = await fetch(`/api/follow/${encodeURIComponent(profile.username)}`, {
+                method,
+                credentials: "include",
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== "success") {
+                console.error("Follow toggle failed:", json);
+                return;
+            }
+
+            await loadFollowMeta(profile.username);
+        } catch (err) {
+            console.error("handleFollowToggle error:", err);
+        } finally {
+            setFollowLoading(false);
+        }
+    };
+
     const loadAll = async () => {
         setLoading(true);
         setNotFound(false);
         setPrivateBlocked(false);
 
         try {
+
             // 1) REQUIRED: check session
             const sessionRes = await fetch("/api/session", {
                 credentials: "include"
@@ -130,6 +185,8 @@ export default function Portfolio() {
                 state: p.state || "",
                 country: p.country || ""
             });
+
+            await loadFollowMeta(p.username || targetUsername);
 
             const ent = json.entries || {};
             setProjects(ent.projects || []);
@@ -267,6 +324,42 @@ export default function Portfolio() {
                                                         >
                                                             {privacyLabel}
                                                         </StatusIndicator>
+                                                    </Box>
+
+                                                    <Box margin={{ top: "s" }}>
+                                                        <SpaceBetween direction="horizontal" size="m">
+                                                            <Box>
+                                                                <Box fontWeight="bold">{followMeta.counts.followers}</Box>
+                                                                <Box color="text-body-secondary" fontSize="body-s">Followers</Box>
+                                                            </Box>
+
+                                                            <Box>
+                                                                <Box fontWeight="bold">{followMeta.counts.following}</Box>
+                                                                <Box color="text-body-secondary" fontSize="body-s">Following</Box>
+                                                            </Box>
+
+                                                            {!isSelf ? (
+                                                                <div className="profile-followRow">
+                                                                    <Button
+                                                                        variant={followMeta.following ? "normal" : "primary"}
+                                                                        loading={followLoading}
+                                                                        onClick={handleFollowToggle}
+                                                                    >
+                                                                        {followMeta.following ? "Following" : "Follow"}
+                                                                    </Button>
+
+                                                                    {followMeta.connection ? (
+                                                                        <div className="profile-followStatus">
+                                                                            <StatusIndicator type="success">Connected</StatusIndicator>
+                                                                        </div>
+                                                                    ) : followMeta.followedBy ? (
+                                                                        <div className="profile-followStatus">
+                                                                            <StatusIndicator type="info">Follows you</StatusIndicator>
+                                                                        </div>
+                                                                    ) : null}
+                                                                </div>
+                                                            ) : null}
+                                                        </SpaceBetween>
                                                     </Box>
                                                 </div>
                                             </div>

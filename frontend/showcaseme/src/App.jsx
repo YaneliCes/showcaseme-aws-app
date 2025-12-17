@@ -14,6 +14,8 @@ import Dashboard from './pages/Dashboard';
 import PortfolioManager from './pages/PortfolioManager';
 import Portfolio from "./pages/Portfolio";
 import Feed from "./pages/Feed";
+import Network from "./pages/Network";
+import Settings from "./pages/Settings";
 
 import { usePageTracking } from "./hooks/usePageTracking";
 
@@ -47,6 +49,8 @@ function App() {
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="portfolio/:username" element={<Portfolio />} />
             <Route path="feed" element={<Feed />} />
+            <Route path="network" element={<Network />} />
+            <Route path="settings" element={<Settings />} />
         </Routes>
         <Footer />
     </div>

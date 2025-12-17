@@ -4,24 +4,29 @@ const { getConnection } = require("../lib/db");
 const router = express.Router();
 
 // GET /api/public/portfolio/:username
-// Returns public portfolio data for a user (only if privacy=public)
+// Returns portfolio data if:
+// - target is public, OR
+// - viewer is the same user, OR
+// - target is private but viewer has a mutual connection with target
 router.get("/:username", async (req, res) => {
     const username = String(req.params.username || "").trim();
     if (!username) {
         return res.status(400).json({ status: "error", message: "Missing username." });
     }
 
+    const viewerId = req.session?.user?.id ? Number(req.session.user.id) : null;
+
     const conn = await getConnection();
     try {
         const rows = await conn.query(
-            `SELECT u.id AS user_id,u.username,up.bio, up.profile_image_url, up.resume_url, up.title, 
-            up.city, up.state, up.country, up.privacy, up.tier, up.updated,i.name AS industry_name
+            `SELECT
+                u.id AS user_id, u.username, up.bio, up.profile_image_url, up.resume_url, up.title,
+                up.city, up.state, up.country, up.privacy, up.tier, up.updated, i.name AS industry_name
             FROM Users u
             JOIN UserProfiles up ON up.user_id = u.id
             LEFT JOIN Industries i ON i.id = up.industry_id
             WHERE u.username = ?
-            LIMIT 1
-            `,
+            LIMIT 1`,
             [username]
         );
 
@@ -30,12 +35,37 @@ router.get("/:username", async (req, res) => {
         }
 
         const profile = rows[0];
+        const targetId = Number(profile.user_id);
 
+        // If private: allow only if self OR mutual connection
         if (profile.privacy !== "public") {
-            return res.status(403).json({ status: "error", message: "This portfolio is private." });
+            if (!viewerId) {
+                return res.status(403).json({ status: "error", message: "This portfolio is private." });
+            }
+
+            if (viewerId !== targetId) {
+                // mutual = viewer follows target AND target follows viewer
+                const [viewerFollows, targetFollows] = await Promise.all([
+                conn.query(
+                    `SELECT 1 FROM UserFavorites WHERE user_id = ? AND favorite_user_id = ? LIMIT 1`,
+                    [viewerId, targetId]
+                ),
+                conn.query(
+                    `SELECT 1 FROM UserFavorites WHERE user_id = ? AND favorite_user_id = ? LIMIT 1`,
+                    [targetId, viewerId]
+                ),
+                ]);
+
+                const mutual = !!(viewerFollows?.length && targetFollows?.length);
+
+                if (!mutual) {
+                    return res.status(403).json({ status: "error", message: "This portfolio is private." });
+                }
+            }
         }
 
-        const userId = profile.user_id;
+        // If we got here, we can return full portfolio
+        const userId = targetId;
 
         const [projects, jobs, affiliations, education] = await Promise.all([
             conn.query(
@@ -62,8 +92,7 @@ router.get("/:username", async (req, res) => {
                 FROM UserSkills us
                 JOIN Skills s ON s.id = us.skill_id
                 WHERE us.user_id = ? AND s.type = 'hard'
-                ORDER BY s.name ASC
-                `,
+                ORDER BY s.name ASC`,
                 [userId]
             ),
             conn.query(
@@ -71,8 +100,7 @@ router.get("/:username", async (req, res) => {
                 FROM UserSkills us
                 JOIN Skills s ON s.id = us.skill_id
                 WHERE us.user_id = ? AND s.type = 'soft'
-                ORDER BY s.name ASC
-                `,
+                ORDER BY s.name ASC`,
                 [userId]
             ),
         ]);

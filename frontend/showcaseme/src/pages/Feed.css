@@ -25,7 +25,13 @@
     justify-content: center;
     font-weight: 800;
     font-size: 18px;
+    background: rgb(232, 231, 231);
+    border: 2px solid black;
+}
+
+body.awsui-dark-mode .feed-avatar {
     background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.20) !important;
 }
 
 .feed-identity {
