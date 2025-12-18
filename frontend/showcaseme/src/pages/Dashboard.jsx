@@ -21,6 +21,8 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [navigationOpen, setNavigationOpen] = useState(false);
 
+    const [resumeViewUrl, setResumeViewUrl] = useState("");
+
     const [colorMode, setColorMode] = useState(() => {
         const saved = localStorage.getItem("cs-color-mode");
         return saved === "dark" ? "dark" : "light";
@@ -198,6 +200,11 @@ export default function Dashboard() {
 
             // Update UI + profile
             setProfile((p) => ({ ...p, resume_url: json.resume_url }));
+            try {
+                const r = await fetch("/api/profile/resume-url", { credentials: "include" });
+                const rj = await r.json().catch(() => ({}));
+                if (r.ok && rj.status === "success") setResumeViewUrl(rj.url || "");
+            } catch {}
             setResumeFiles([]);
             setResumeMsg({ type: "success", text: "Resume uploaded!" });
         } catch (e) {
@@ -208,11 +215,11 @@ export default function Dashboard() {
         }
     };
 
-    const toAbsoluteUrl = (u) => {
-        if (!u) return "";
-        if (u.startsWith("http://") || u.startsWith("https://")) return u;
-        return `${window.location.origin}${u}`;
-    };
+    // const toAbsoluteUrl = (u) => {
+    //     if (!u) return "";
+    //     if (u.startsWith("http://") || u.startsWith("https://")) return u;
+    //     return `${window.location.origin}${u}`;
+    // };
 
 
     // When the page loads, apply light/dark mode
@@ -296,6 +303,17 @@ export default function Dashboard() {
                             country: p.country || "",
                             updated: p.updated || null,
                         });
+                        try {
+                            const r = await fetch("/api/profile/resume-url", { credentials: "include" });
+                            const rj = await r.json().catch(() => ({}));
+                            if (!cancelled && r.ok && rj.status === "success") {
+                                setResumeViewUrl(rj.url || "");
+                            }
+                        } catch (e) {
+                            console.error("resume-url fetch error:", e);
+                            if (!cancelled) setResumeViewUrl("");
+                        }
+
                     }
                     setProfileLoading(false);
                 }
@@ -378,7 +396,7 @@ export default function Dashboard() {
     const avatarLetter = displayName?.[0]?.toUpperCase() || "?";
     const industry = profile.industryName?.trim() ? profile.industryName : "Add industry (Edit profile)";
     const privacy = profile.privacy === "private" ? "Private" : "Public";
-    const resume = profile.resume_url ? profile.resume_url : "Upload a resume for others to see.";
+    // const resume = profile.resume_url ? profile.resume_url : "Upload a resume for others to see.";
     const bio = profile.bio?.trim() ? profile.bio : "Add a short bio so people understand what you’re about.";
     const title = profile.title?.trim() ? profile.title : "Add title (Edit profile)";
     const location = [profile.city, profile.state, profile.country].filter(Boolean).join(", ") || "Add location (Edit profile)";
@@ -582,10 +600,10 @@ export default function Dashboard() {
                                                 <Box margin={{ top: "s" }} color="text-body-secondary">
                                                     {profileLoading ? (
                                                         "Loading resume..."
-                                                    ) : profile.resume_url ? (
+                                                    ) : resumeViewUrl ? (
                                                         <>
                                                             Resume:{" "}
-                                                            <a className="resume-link" href={toAbsoluteUrl(profile.resume_url)} target="_blank" rel="noreferrer">
+                                                            <a className="resume-link" href={resumeViewUrl} target="_blank" rel="noreferrer">
                                                                 View PDF
                                                             </a>
                                                         </>
@@ -869,7 +887,7 @@ export default function Dashboard() {
                                                                             bio: profile.bio,
                                                                             privacy: profile.privacy,
                                                                             industry_id: profile.industryId,
-                                                                            resume_url: profile.resume_url || null,
+                                                                            // resume_url: profile.resume_url || null,
                                                                             title: profile.title,
                                                                             city: profile.city,
                                                                             state: profile.state,
@@ -967,16 +985,17 @@ export default function Dashboard() {
 
                                                         <FormField label="Resume (PDF only)">
                                                             <SpaceBetween size="s">
-                                                                {profile.resume_url ? (
+                                                                {resumeViewUrl ? (
                                                                     <Box color="text-body-secondary">
                                                                         Current:{" "}
-                                                                        <a href={toAbsoluteUrl(profile.resume_url)} target="_blank" rel="noreferrer">
+                                                                        <a href={resumeViewUrl} target="_blank" rel="noreferrer">
                                                                             View PDF
                                                                         </a>
                                                                     </Box>
                                                                 ) : (
                                                                     <Box color="text-body-secondary">No resume uploaded yet.</Box>
                                                                 )}
+
 
                                                                 <div className="resume-row">
                                                                     <div className="resume-fileInput">
