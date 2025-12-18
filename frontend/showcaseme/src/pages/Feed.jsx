@@ -16,6 +16,7 @@ export default function Feed() {
     const [users, setUsers] = useState([]);
 
     const [followBusy, setFollowBusy] = useState({});
+    const [viewerUsername, setViewerUsername] = useState("");
 
     const safeText = (text) => (String(text || "").trim() ? String(text) : "");
 
@@ -86,6 +87,8 @@ export default function Feed() {
                     navigate("/login");
                     return;
                 }
+
+                setViewerUsername(String(sessionJson.username || "").toLowerCase());
 
                 await load("");
             } catch (err) {
@@ -162,6 +165,7 @@ export default function Feed() {
                                                 // Private profiles only show full preview if backend says you can view (e.g., mutual connection)
                                                 const canView = (u.privacy === "public") || !!u.canViewPortfolio;
 
+                                                const isSelf = viewerUsername && String(u.username || "").toLowerCase() === viewerUsername;
                                                 const isFollowing = !!u.following;
                                                 const isConnected = !!u.connection;
                                                 const followedBy = !!u.followedBy;
@@ -311,16 +315,18 @@ export default function Feed() {
                                                                             View portfolio
                                                                         </Button>
 
-                                                                        <Button
-                                                                            className={isFollowing ? "feed-followBtnFollowing" : "feed-followBtn"}
-                                                                            loading={!!followBusy[u.username]}
-                                                                            onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            toggleFollow(u.username, isFollowing);
-                                                                            }}
-                                                                        >
-                                                                            {isFollowing ? "Following" : "Follow"}
-                                                                        </Button>
+                                                                        {!isSelf && (
+                                                                            <Button
+                                                                                className={isFollowing ? "feed-followBtnFollowing" : "feed-followBtn"}
+                                                                                loading={!!followBusy[u.username]}
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    toggleFollow(u.username, isFollowing);
+                                                                                }}
+                                                                            >
+                                                                                {isFollowing ? "Following" : "Follow"}
+                                                                            </Button>
+                                                                        )}
 
                                                                         {isConnected ? (
                                                                             ""
@@ -330,16 +336,18 @@ export default function Feed() {
                                                                     </div>
                                                                 ) : (
                                                                     <SpaceBetween direction="horizontal" size="xs">
-                                                                        <Button
-                                                                            variant={isFollowing ? "normal" : "primary"}
-                                                                            loading={!!followBusy[u.username]}
-                                                                            onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            toggleFollow(u.username, isFollowing);
-                                                                            }}
-                                                                        >
-                                                                            {isFollowing ? "Following" : "Follow"}
-                                                                        </Button>
+                                                                        {!isSelf && (
+                                                                            <Button
+                                                                                variant={isFollowing ? "normal" : "primary"}
+                                                                                loading={!!followBusy[u.username]}
+                                                                                onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                toggleFollow(u.username, isFollowing);
+                                                                                }}
+                                                                            >
+                                                                                {isFollowing ? "Following" : "Follow"}
+                                                                            </Button>
+                                                                        )}
 
                                                                         {isConnected ? (
                                                                             ""
