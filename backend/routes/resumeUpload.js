@@ -1,20 +1,21 @@
 const express = require("express");
-const path = require("path");
-const fs = require("fs");
 const crypto = require("crypto");
 const multer = require("multer");
 const requireAuth = require("../utils/requireAuth");
 const { getConnection } = require("../lib/db");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const router = express.Router();
 router.use(requireAuth);
 
-// Store in memory so we can inspect bytes safely before writing to disk
+const REGION = process.env.AWS_REGION || "us-east-2";
+const BUCKET = process.env.RESUME_BUCKET;
+const s3 = new S3Client({ region: REGION });
+
+// Store in memory so we can inspect bytes safely before uploading to S3
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 2 * 1024 * 1024, // 2MB
-    },
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
     fileFilter: (req, file, cb) => {
         const okMime = file.mimetype === "application/pdf";
         if (!okMime) return cb(new Error("Only PDF files are allowed."));
@@ -29,59 +30,101 @@ function isPdfMagic(buffer) {
 }
 
 router.post("/", upload.single("resume"), async (req, res) => {
-    const userId = Number(req.session.user.id);
+    const userId = Number(req.session?.user?.id);
 
     try {
+        if (!BUCKET) {
+            return res.status(500).json({
+                status: "error",
+                message: "Server missing RESUME_BUCKET configuration.",
+            });
+        }
+
+        if (!userId) {
+            return res
+                .status(401)
+                .json({ status: "error", message: "Not authenticated." });
+        }
+
         if (!req.file) {
-            return res.status(400).json({ status: "error", message: "No file uploaded." });
+            return res
+                .status(400)
+                .json({ status: "error", message: "No file uploaded." });
         }
 
         // Reject dangerous filename patterns even though we never use it
         const original = String(req.file.originalname || "").toLowerCase();
-        if (original.includes(".php") || original.includes(".phtml") || original.includes(".phar")) {
-            return res.status(400).json({ status: "error", message: "Invalid file type." });
+        if (
+            original.includes(".php") ||
+            original.includes(".phtml") ||
+            original.includes(".phar")
+        ) {
+            return res
+                .status(400)
+                .json({ status: "error", message: "Invalid file type." });
         }
 
         // Strong check: magic bytes
         if (!isPdfMagic(req.file.buffer)) {
-            return res.status(400).json({ status: "error", message: "File is not a valid PDF." });
+            return res
+                .status(400)
+                .json({ status: "error", message: "File is not a valid PDF." });
         }
 
-        // Save with random name (never trust user filename)
-        const uploadsDir = path.join(__dirname, "..", "uploads", "resumes");
-        fs.mkdirSync(uploadsDir, { recursive: true });
-
+        // S3 key (unique + grouped per user)
         const fileId = crypto.randomBytes(16).toString("hex");
-        const filename = `${fileId}.pdf`;
-        const diskPath = path.join(uploadsDir, filename);
+        const key = `resumes/${userId}/${fileId}.pdf`;
 
-        fs.writeFileSync(diskPath, req.file.buffer);
+        // Upload to S3 
+        await s3.send(
+            new PutObjectCommand({
+                Bucket: BUCKET,
+                Key: key,
+                Body: req.file.buffer,
+                ContentType: "application/pdf",
+                // Optional (good practice):
+                // ServerSideEncryption: "AES256",
+            })
+        );
 
-        // Public URL (served by express.static below)
-        const publicUrl = `/uploads/resumes/${filename}`;
-
-        // Store in DB
+        // Store the S3 key in DB (NOT a /uploads path)
         const conn = await getConnection();
         try {
-            await conn.query(`INSERT IGNORE INTO UserProfiles (user_id) VALUES (?)`, [userId]);
+            await conn.query(
+                `INSERT IGNORE INTO UserProfiles (user_id) VALUES (?)`,
+                [userId]
+            );
             await conn.query(
                 `UPDATE UserProfiles SET resume_url = ? WHERE user_id = ?`,
-                [publicUrl, userId]
+                [key, userId]
             );
         } finally {
             conn.release();
         }
 
-        return res.json({ status: "success", resume_url: publicUrl });
+        return res.json({ status: "success", resume_url: key });
     } catch (err) {
         console.error("Resume upload error:", err);
 
-        const msg = String(err.message || "");
+        const msg = String(err?.message || "");
         if (msg.includes("File too large")) {
-            return res.status(413).json({ status: "error", message: "PDF is too large." });
+            return res
+                .status(413)
+                .json({ status: "error", message: "PDF is too large." });
         }
 
-        return res.status(500).json({ status: "error", message: "Upload failed." });
+        // AWS SDK errors often come through with name/code
+        if (err?.name === "AccessDenied" || err?.Code === "AccessDenied") {
+            return res.status(403).json({
+                status: "error",
+                message:
+                    "Upload failed (S3 access denied). Check IAM role permissions.",
+            });
+        }
+
+        return res
+            .status(500)
+            .json({ status: "error", message: "Upload failed." });
     }
 });
 

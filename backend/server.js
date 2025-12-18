@@ -15,6 +15,7 @@ const settingsRouter = require("./routes/settings");
 const mfaRoutes = require("./routes/mfa");
 const path = require("path");
 const resumeUploadRouter = require("./routes/resumeUpload");
+const profileResumeRouter = require("./routes/profileResume");
 
 dotenv.config();
 
@@ -73,6 +74,9 @@ app.use("/api", authRouter);
 
 // Profile routes (edit profile, projects, experience, etc.)
 app.use("/api/profile", profileRouter);
+
+// Resume signed URL route (GET /api/profile/resume-url)
+app.use("/api/profile", profileResumeRouter);
 
 // Entry routes (edit portoflio - projects, experience, affiliations)
 app.use("/api/profile/entries", entriesRouter);

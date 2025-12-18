@@ -55,7 +55,7 @@ router.put("/", async (req, res) => {
     const {
         bio = null,
         profile_image_url = null,
-        resume_url = null,
+        // resume_url = null,
         privacy = "public",
         industry_id = null,
         title = null,
@@ -105,9 +105,9 @@ router.put("/", async (req, res) => {
 
         await conn.query (
             `UPDATE UserProfiles
-            SET bio = ?, profile_image_url = ?, resume_url = ?, privacy = ?, industry_id = ?, title = ?, city = ?, state = ?, country = ?
+            SET bio = ?, profile_image_url = ?, privacy = ?, industry_id = ?, title = ?, city = ?, state = ?, country = ?
             WHERE user_id = ?`,
-            [bio, profile_image_url, resume_url, privacy, industryIdClean, title, city, state, country, userId]
+            [bio, profile_image_url, privacy, industryIdClean, title, city, state, country, userId]
         );
 
         await logActivity(req, {
